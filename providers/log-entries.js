@@ -4,7 +4,10 @@ let logentries = require("node-logentries");
 
 exports.create = function (options) {
   let logger = logentries.logger(options.app),
+    access;
+  if (options.access) {
     access = logentries.logger(options.access);
+  }
   return {
     error: function (tokens) {
       logger.log(tokens.level, tokens);
@@ -15,7 +18,9 @@ exports.create = function (options) {
     },
     // Used for Express logger
     write: function (buf) {
-      access.log("access", buf);
+      if (access && access.log) {
+        access.log("access", buf);
+      }
     }
   };
 };
