@@ -1,0 +1,28 @@
+{
+  "name": "btrz-logger",
+  "version": "1.0.0",
+  "description": "A multi-transport logger",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Betterez/btrz-logger.git"
+  },
+  "keywords": [
+    "Logging",
+    "logger",
+    "log-entries",
+    "console"
+  ],
+  "author": "Betterez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Betterez/btrz-logger/issues"
+  },
+  "homepage": "https://github.com/Betterez/btrz-logger#readme"
+}
