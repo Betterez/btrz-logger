@@ -24,5 +24,13 @@
   "bugs": {
     "url": "https://github.com/Betterez/btrz-logger/issues"
   },
-  "homepage": "https://github.com/Betterez/btrz-logger#readme"
+  "homepage": "https://github.com/Betterez/btrz-logger#readme",
+  "dependencies": {
+    "ansi-color": "^0.2.1",
+    "lodash": "^3.10.1",
+    "node-logentries": "^0.1.4"
+  },
+  "devDependencies": {
+    "mocha": "^2.3.2"
+  }
 }
