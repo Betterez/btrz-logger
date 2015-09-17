@@ -3,7 +3,8 @@
 exports.create = function (options) {
 
   let _ = require("lodash"),
-    loggers = [console],
+    util = require("util"),
+    loggers = [],
     level,
     levels = {debug: 0, info: 1, error: 2, fatal: 3};
 
@@ -22,7 +23,9 @@ exports.create = function (options) {
   }
 
   function serialize(results, args) {
-    if (!args) { return results; }
+    if (!args) {
+      return results;
+    }
     if (Array.isArray(args)) {
       args.forEach(function (a) {
         serialize(results, a);
@@ -30,33 +33,18 @@ exports.create = function (options) {
       return results;
     }
     if (args.stack) {
-      if (args.errorCode) {
-        results.push(
-          JSON.stringify({
-            errorCode: args.errorCode,
-            message: args.message,
-            arguments: args.arguments,
-            type: args.type
-          }) +
-          "\n" + JSON.stringify(args.data) +
-          "\n" + args.stack + "\n"
-        );
-      } else {
-        results.push(
-          JSON.stringify({
-            message: args.message,
-            arguments: args.arguments,
-            type: args.type
-          }) +
-          args.stack + "\n"
-        );
-      }
+      results.push(args.stack.split("\n"));
+    } else if (Object.keys(args).length > 0) {
+      results.push(util.inspect(args, {showHidden: true, depth: 4}) + "\n");
     } else {
-      results.push(JSON.stringify(args) + "\n");
+      results.push(util.inspect(args) + "\n");
     }
   }
 
   function buildMessage(level, msg, args) {
+    if (!Array.isArray(args)) {
+      args = [args];
+    }
     let serialized = serialize([], args),
       dateParts = getDateParts(),
       tokens = {
@@ -64,8 +52,8 @@ exports.create = function (options) {
       time: dateParts.time,
       level: level,
       message: msg,
-      serverId: options.serverId,
-      data: serialized
+      serverId: options && options.serverId ? options.serverId : "",
+      data: serialized.length > 0 ?  serialized : ""
     };
     return tokens;
   }
@@ -78,7 +66,7 @@ exports.create = function (options) {
 
     getLevel: function () {
       if (!level) {
-        level = options.level;
+        level = options && options.level ? options.level : "debug";
       }
       return level;
     },
@@ -98,6 +86,13 @@ exports.create = function (options) {
 
     clearLoggers: function () {
       loggers = [];
+    },
+
+    // Level ? :-)
+    log: function (level, msg, args) {
+      if (levels[this.getLevel()] <= levels[level]) {
+        write("error", buildMessage(level, msg, args));
+      }
     },
 
     // Level 0
