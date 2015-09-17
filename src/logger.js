@@ -30,16 +30,30 @@ function serialize(results, args) {
 }
 
 function buildMessage(level, msg, args, options) {
-  if (!Array.isArray(args)) {
-    args = [args];
+  let _msg = msg,
+    _args = args;
+
+  if (!_.isString(msg) && _.isString(args)) {
+    _args = msg;
+    _msg = args;
   }
-  let serialized = serialize([], args),
+
+  if (!_.isString(msg) && !_.isString(args)) {
+    _args = [msg, args];
+    _msg = "";
+  }
+
+  if (!Array.isArray(_args)) {
+    _args = [_args];
+  }
+
+  let serialized = serialize([], _args),
     dateParts = getDateParts(),
     tokens = {
     date: dateParts.date,
     time: dateParts.time,
     level: level,
-    message: msg,
+    message: _msg,
     serverId: options && options.serverId ? options.serverId : "",
     data: serialized.length > 0 ?  serialized : ""
   };
