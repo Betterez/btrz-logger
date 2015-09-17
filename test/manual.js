@@ -4,8 +4,8 @@ describe("console", function () {
   let logger;
   beforeEach(function () {
     let Logger = require("../index").Logger,
-      ConsoleLogger = require("../providers/console-logger").ConsoleLogger,
-      LogEntriesLogger = require("../providers/log-entries-logger").LogEntriesLogger,
+      ConsoleLogger = require("../index").ConsoleLogger,
+      LogEntriesLogger = require("../index").LogEntriesLogger,
       logger = new Logger();
     logger.addLogger(new ConsoleLogger());
     logger.addLogger(new LogEntriesLogger({token: "fake-token-here"}));
