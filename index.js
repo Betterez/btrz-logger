@@ -1,126 +1,124 @@
 "use strict";
+let _ = require("lodash"),
+  util = require("util");
 
-exports.create = function (options) {
+function getDateParts() {
+  let dateParts = new Date().toISOString().replace("Z", "").split("T");
+  return {
+    date: dateParts[0],
+    time: dateParts[1]
+  };
+}
 
-  let _ = require("lodash"),
-    util = require("util"),
-    loggers = [],
-    level,
-    levels = {debug: 0, info: 1, error: 2, fatal: 3};
+function serialize(results, args) {
+  if (!args) {
+    return results;
+  }
+  if (Array.isArray(args)) {
+    args.forEach(function (a) {
+      serialize(results, a);
+    });
+    return results;
+  }
+  if (args.stack) {
+    results.push(args.stack.split("\n"));
+  } else if (Object.keys(args).length > 0) {
+    results.push(util.inspect(args, {showHidden: true, depth: 4}) + "\n");
+  } else {
+    results.push(util.inspect(args) + "\n");
+  }
+}
 
-  function write(func, msg) {
-    loggers.forEach(function doLog(logger) {
+function buildMessage(level, msg, args, options) {
+  if (!Array.isArray(args)) {
+    args = [args];
+  }
+  let serialized = serialize([], args),
+    dateParts = getDateParts(),
+    tokens = {
+    date: dateParts.date,
+    time: dateParts.time,
+    level: level,
+    message: msg,
+    serverId: options && options.serverId ? options.serverId : "",
+    data: serialized.length > 0 ?  serialized : ""
+  };
+  return tokens;
+}
+
+class Logger {
+  constructor(options) {
+    this.options = options;
+    this.loggers = [];
+    this.level = options && options.level ? options.level : "debug";
+    this.levels = {debug: 0, info: 1, error: 2, fatal: 3};
+  }
+
+  _write(func, msg) {
+    this.loggers.forEach(function doLog(logger) {
       logger[func].apply(logger, [msg]);
     });
   }
 
-  function getDateParts() {
-    let dateParts = new Date().toISOString().replace("Z", "").split("T");
-    return {
-      date: dateParts[0],
-      time: dateParts[1]
-    };
+  setLevel(minLevel) {
+    this.level = minLevel;
   }
 
-  function serialize(results, args) {
-    if (!args) {
-      return results;
-    }
-    if (Array.isArray(args)) {
-      args.forEach(function (a) {
-        serialize(results, a);
-      });
-      return results;
-    }
-    if (args.stack) {
-      results.push(args.stack.split("\n"));
-    } else if (Object.keys(args).length > 0) {
-      results.push(util.inspect(args, {showHidden: true, depth: 4}) + "\n");
+  getLevel() {
+    return this.level;
+  }
+
+  getLoggers() {
+    return this.loggers;
+  }
+
+  addLogger(logger) {
+    if (logger.error && _.isFunction(logger.error)) {
+      this.loggers.push(logger);
     } else {
-      results.push(util.inspect(args) + "\n");
+      let loggerOptions = this.options.loggers[logger];
+      this.loggers.push(require("./providers/" + loggerOptions.provider).create(loggerOptions.options));
     }
   }
 
-  function buildMessage(level, msg, args) {
-    if (!Array.isArray(args)) {
-      args = [args];
-    }
-    let serialized = serialize([], args),
-      dateParts = getDateParts(),
-      tokens = {
-      date: dateParts.date,
-      time: dateParts.time,
-      level: level,
-      message: msg,
-      serverId: options && options.serverId ? options.serverId : "",
-      data: serialized.length > 0 ?  serialized : ""
-    };
-    return tokens;
+  clearLoggers() {
+    this.loggers = [];
   }
 
-  return {
-
-    setLevel: function (minLevel) {
-      level = minLevel;
-    },
-
-    getLevel: function () {
-      if (!level) {
-        level = options && options.level ? options.level : "debug";
-      }
-      return level;
-    },
-
-    getLoggers: function () {
-      return loggers;
-    },
-
-    addLogger: function (logger) {
-      if (logger.error && _.isFunction(logger.error)) {
-        loggers.push(logger);
-      } else {
-        let loggerOptions = options.loggers[logger];
-        loggers.push(require("./providers/" + loggerOptions.provider).create(loggerOptions.options));
-      }
-    },
-
-    clearLoggers: function () {
-      loggers = [];
-    },
-
-    // Level ? :-)
-    log: function (level, msg, args) {
-      if (levels[this.getLevel()] <= levels[level]) {
-        write("error", buildMessage(level, msg, args));
-      }
-    },
-
-    // Level 0
-    debug: function (msg, args) {
-      if (levels[this.getLevel()] <= 0) {
-        write("error", buildMessage("debug", msg, args));
-      }
-    },
-
-    // Level 1
-    info: function (msg, args) {
-      if (levels[this.getLevel()] <= 1) {
-        write("error", buildMessage("info", msg, args));
-      }
-    },
-
-    // Level 2
-    error: function (msg, args) {
-      if (levels[this.getLevel()] <= 2) {
-        write("error", buildMessage("error", msg, args));
-      }
-    },
-
-    // Level 3
-    fatal: function (msg, args) {
-      if (levels[this.getLevel()] <= 3) {
-        write("error", buildMessage("fatal", msg, args));
-      }
+  // Level ? :-)
+  log(level, msg, args) {
+    if (this.levels[this.getLevel()] <= this.levels[level]) {
+      this._write("error", buildMessage(level, msg, args, this.options));
     }
-  };
-};
+  }
+
+  // Level 0
+  debug(msg, args) {
+    if (this.levels[this.getLevel()] <= 0) {
+      this._write("error", buildMessage("debug", msg, args, this.options));
+    }
+  }
+
+  // Level 1
+  info(msg, args) {
+    if (this.levels[this.getLevel()] <= 1) {
+      this._write("error", buildMessage("info", msg, args, this.options));
+    }
+  }
+
+  // Level 2
+  error(msg, args) {
+    if (this.levels[this.getLevel()] <= 2) {
+      this._write("error", buildMessage("error", msg, args, this.options));
+    }
+  }
+
+  // Level 3
+  fatal(msg, args) {
+    if (this.levels[this.getLevel()] <= 3) {
+      this._write("error", buildMessage("fatal", msg, args, this.options));
+    }
+  }
+}
+
+exports.Logger = Logger;

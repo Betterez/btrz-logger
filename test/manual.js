@@ -1,15 +1,18 @@
 "use strict";
 
 describe("console", function () {
-  let logger
+  let logger;
   beforeEach(function () {
-    logger = require("../index").create({loggers:{console: {provider: "console"}}});
-    logger.addLogger("console");
-    logger.addLogger("log-entries");
+    let Logger = require("../index").Logger,
+      ConsoleLogger = require("../providers/console-logger").ConsoleLogger,
+      LogEntriesLogger = require("../providers/log-entries-logger").LogEntriesLogger,
+      logger = new Logger();
+    logger.addLogger(new ConsoleLogger());
+    logger.addLogger(new LogEntriesLogger({token: "fake-token-here"}));
   });
 
   it("should log to console", function () {
-    
+
     // logger.debug("Hello log", new Error("err"));
     // logger.info("Hello info", new Error("err"));
     // logger.error("Hello error", new Error("err"));
