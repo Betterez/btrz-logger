@@ -3,24 +3,22 @@
 let logentries = require("node-logentries");
 
 exports.create = function (options) {
-  let logger = logentries.logger(options.app),
-    access;
-  if (options.access) {
-    access = logentries.logger(options.access);
-  }
+  let logger = logentries.logger(options);
   return {
     error: function (tokens) {
-      logger.log(tokens.level, tokens);
+      let level = tokens.level;
+      delete tokens.level;
+      logger.log(level, tokens);
     },
+
     // Used for Uncaught Exceptions
     fatal: function (tokens) {
       this.error(tokens);
     },
+
     // Used for Express logger
     write: function (buf) {
-      if (access && access.log) {
-        access.log("access", buf);
-      }
+      logger.log("access", buf);
     }
   };
 };
