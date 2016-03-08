@@ -1,6 +1,5 @@
 "use strict";
-let _ = require("lodash"),
-  util = require("util");
+let util = require("util");
 
 function getDateParts() {
   let dateParts = new Date().toISOString().replace("Z", "").split("T");
@@ -8,6 +7,10 @@ function getDateParts() {
     date: dateParts[0],
     time: dateParts[1]
   };
+}
+
+function isString(value) {
+  return value && value.toLowerCase;
 }
 
 function serialize(results, args) {
@@ -33,12 +36,12 @@ function buildMessage(level, msg, args, options) {
   let _msg = msg,
     _args = args;
 
-  if (!_.isString(msg) && _.isString(args)) {
+  if (!isString(msg) && isString(args)) {
     _args = msg;
     _msg = args;
   }
 
-  if (!_.isString(msg) && !_.isString(args)) {
+  if (!isString(msg) && !isString(args)) {
     _args = [msg, args];
     _msg = "";
   }
@@ -87,7 +90,7 @@ class Logger {
   }
 
   addLogger(logger) {
-    if (logger.error && _.isFunction(logger.error)) {
+    if (logger.error && logger.error.apply) {
       this.loggers.push(logger);
     } else {
       let loggerOptions = this.options.loggers[logger];

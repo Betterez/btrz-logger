@@ -1,6 +1,6 @@
 {
   "name": "btrz-logger",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A multi-transport logger",
   "main": "index.js",
   "directories": {
@@ -28,7 +28,6 @@
   "homepage": "https://github.com/Betterez/btrz-logger#readme",
   "dependencies": {
     "ansi-color": "^0.2.1",
-    "lodash": "^3.10.1",
     "node-logentries": "^0.1.4"
   },
   "devDependencies": {
