@@ -2,7 +2,7 @@
 
 describe("SilentLogger", () => {
 
-  const SilentLogger = require("../src/silent-logger").SilentLogger,
+  const SilentLogger = require("../index").SilentLogger,
     expect = require("chai").expect;
 
   it("should response to .error", () => {
