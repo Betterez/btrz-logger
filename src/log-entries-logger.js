@@ -5,7 +5,7 @@ let logentries = require("node-logentries");
 class LogEntriesLogger {
 
   constructor(options) {
-    options.levels = {debug: 0, info: 1, error: 2, fatal: 3};
+    options.levels = {access: 0, debug: 1, info: 2, error: 3, fatal: 4};
     this.logger = logentries.logger(options);
   }
 
