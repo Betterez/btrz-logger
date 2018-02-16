@@ -1,11 +1,19 @@
 "use strict";
 
 class SilentLogger {
-  error() {
-  }
+
+  log() {}
+
+  debug() {}
+
+  info() {}
+
+  error() {}
+
+  fatal() {}
+
   // Used for Express logger
-  write() {
-  }
+  write() {}
 }
 
 exports.SilentLogger = SilentLogger;
