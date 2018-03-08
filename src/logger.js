@@ -58,6 +58,7 @@ function buildMessage(level, msg, args, options) {
     level: level,
     message: _msg,
     serverId: options && options.serverId ? options.serverId : "",
+    traceId: options && options.traceId ? options.traceId : "",
     data: serialized.length > 0 ?  serialized : ""
   };
   return tokens;
