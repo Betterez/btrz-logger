@@ -1,6 +1,6 @@
 "use strict";
 
-describe.skip("console", function () {
+describe("console", function () {
 
   let logger;
 

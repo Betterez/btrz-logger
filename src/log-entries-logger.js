@@ -2,6 +2,16 @@
 
 let logentries = require("node-logentries");
 
+function stringifyTokens(tokens) {
+  return {
+    date: `"${tokens.date}"`,
+    message: `"${tokens.message}"`,
+    serverId: `"${tokens.serverId}"`,
+    traceId: `"${tokens.traceId}"`,
+    data: tokens.data
+  };
+}
+
 class LogEntriesLogger {
 
   constructor(options) {
@@ -12,12 +22,12 @@ class LogEntriesLogger {
   error(tokens) {
     let level = tokens.level;
     delete tokens.level;
-    this.logger.log(level, tokens);
+    this.logger.log(level, stringifyTokens(tokens));
   }
 
   // Used for Uncaught Exceptions
   fatal(tokens) {
-    this.logger.log("error", tokens);
+    this.logger.log("error", stringifyTokens(tokens));
   }
 
   // Used for Express logger

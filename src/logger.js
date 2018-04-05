@@ -1,14 +1,6 @@
 "use strict";
 let util = require("util");
 
-function getDateParts() {
-  let dateParts = new Date().toISOString().replace("Z", "").split("T");
-  return {
-    date: dateParts[0],
-    time: dateParts[1]
-  };
-}
-
 function isString(value) {
   return value && value.toLowerCase;
 }
@@ -51,14 +43,12 @@ function buildMessage(level, msg, args, options) {
   }
 
   let serialized = serialize([], _args),
-    dateParts = getDateParts(),
     tokens = {
-    date: dateParts.date,
-    time: dateParts.time,
+    date: new Date().toISOString(),
     level: level,
     message: _msg,
     serverId: options && options.serverId ? options.serverId : "",
-    traceId: options && options.traceId ? options.traceId : "",
+      traceId: options && options.traceId ? options.traceId : "",
     data: serialized.length > 0 ?  serialized : ""
   };
   return tokens;

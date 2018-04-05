@@ -11,7 +11,7 @@ let util = require("util"),
 
 class ConsoleLogger {
   error(tokens) {
-    let msg = `${tokens.level.toUpperCase()}\t${tokens.date} ${tokens.time}\t${tokens.serverId}\t${tokens.traceId}\t${tokens.message}`;
+    let msg = `${tokens.level.toUpperCase()}\t${tokens.date} \t${tokens.serverId}\t${tokens.traceId}\t${tokens.message}`;
 
     if (tokens.data) {
       msg += `\t${util.inspect(tokens.data)}`;
