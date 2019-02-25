@@ -4,6 +4,7 @@
   "description": "A multi-transport logger",
   "main": "index.js",
   "scripts": {
+    "postversion": "git push origin master && git push --tags",
     "test": "mocha",
     "test-w": "mocha -w"
   },
