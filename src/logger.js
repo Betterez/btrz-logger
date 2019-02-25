@@ -1,4 +1,5 @@
 "use strict";
+const logCleaner = require("./log-cleaner");
 let util = require("util");
 
 function isString(value) {
@@ -46,7 +47,7 @@ function buildMessage(level, msg, args, options) {
     tokens = {
     date: new Date().toISOString(),
     level: level,
-    message: _msg,
+    message: logCleaner.cleanUrlRawParameters(_msg),
     serverId: options && options.serverId ? options.serverId : "",
       traceId: options && options.traceId ? options.traceId : "",
     data: serialized.length > 0 ?  serialized : ""

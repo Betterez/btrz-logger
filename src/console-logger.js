@@ -1,5 +1,6 @@
 "use strict";
 
+const logCleaner = require("./log-cleaner");
 let util = require("util"),
   color = require("ansi-color").set,
   colorFromLevel = {
@@ -20,7 +21,8 @@ class ConsoleLogger {
   }
   // Used for Express logger
   write(buf) {
-    console.error(buf);
+    cleanBuf = logCleaner.cleanUrlRawParameters(buf);
+    console.error(cleanBuf);
   }
 }
 

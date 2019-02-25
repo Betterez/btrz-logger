@@ -1,6 +1,7 @@
 "use strict";
 
 let logentries = require("node-logentries");
+const logCleaner = require("./log-cleaner");
 
 function stringifyTokens(tokens) {
   return {
@@ -32,7 +33,8 @@ class LogEntriesLogger {
 
   // Used for Express logger
   write(buf) {
-    this.logger.log("access", buf);
+    cleanBuf = logCleaner.cleanUrlRawParameters(buf);
+    this.logger.log("access", cleanBuf);
   }
 }
 
