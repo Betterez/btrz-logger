@@ -33,7 +33,7 @@ class LogEntriesLogger {
 
   // Used for Express logger
   write(buf) {
-    cleanBuf = logCleaner.cleanUrlRawParameters(buf);
+    let cleanBuf = logCleaner.cleanUrlRawParameters(buf);
     this.logger.log("access", cleanBuf);
   }
 }
