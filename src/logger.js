@@ -63,6 +63,16 @@ class Logger {
     this.levels = {debug: 0, info: 1, error: 2, fatal: 3};
   }
 
+  // For parity with the Stream interface (stream.write)
+  write(...args) {
+    this.loggers.forEach((logger) => {
+      if (typeof logger.write === "function") {
+        // Delegate the call to the concrete logger classes
+        logger.write(...args);
+      }
+    });
+  }
+
   _write(func, msg) {
     this.loggers.forEach(function doLog(logger) {
       logger[func].apply(logger, [msg]);
