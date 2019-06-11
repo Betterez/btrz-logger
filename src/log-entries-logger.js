@@ -34,7 +34,7 @@ class LogEntriesLogger {
     this.logger = createLogEntriesLogger(options);
   }
 
-  error(tokens) {
+  log(tokens) {
     let level = tokens.level;
     delete tokens.level;
     this.logger.log(level, stringifyTokens(tokens));
@@ -51,5 +51,8 @@ class LogEntriesLogger {
     this.logger.log("access", cleanBuf);
   }
 }
+
+// For backwards compatibility
+LogEntriesLogger.prototype.error = LogEntriesLogger.prototype.log;
 
 exports.LogEntriesLogger = LogEntriesLogger;

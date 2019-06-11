@@ -66,16 +66,14 @@ class Logger {
   // For parity with the Stream interface (stream.write)
   write(...args) {
     this.loggers.forEach((logger) => {
-      if (typeof logger.write === "function") {
-        // Delegate the call to the concrete logger classes
-        logger.write(...args);
-      }
+      // Delegate the call to the concrete logger classes
+      logger.write(...args);
     });
   }
 
-  _write(func, msg) {
-    this.loggers.forEach(function doLog(logger) {
-      logger[func].apply(logger, [msg]);
+  _log(msg) {
+    this.loggers.forEach((logger) => {
+      logger.log(msg);
     });
   }
 
@@ -107,35 +105,35 @@ class Logger {
   // Level ? :-)
   log(level, msg, args) {
     if (this.levels[this.getLevel()] <= this.levels[level]) {
-      this._write("error", buildMessage(level, msg, args, this.options));
+      this._log(buildMessage(level, msg, args, this.options));
     }
   }
 
   // Level 0
   debug(msg, args) {
     if (this.levels[this.getLevel()] <= 0) {
-      this._write("error", buildMessage("debug", msg, args, this.options));
+      this._log(buildMessage("debug", msg, args, this.options));
     }
   }
 
   // Level 1
   info(msg, args) {
     if (this.levels[this.getLevel()] <= 1) {
-      this._write("error", buildMessage("info", msg, args, this.options));
+      this._log(buildMessage("info", msg, args, this.options));
     }
   }
 
   // Level 2
   error(msg, args) {
     if (this.levels[this.getLevel()] <= 2) {
-      this._write("error", buildMessage("error", msg, args, this.options));
+      this._log(buildMessage("error", msg, args, this.options));
     }
   }
 
   // Level 3
   fatal(msg, args) {
     if (this.levels[this.getLevel()] <= 3) {
-      this._write("error", buildMessage("fatal", msg, args, this.options));
+      this._log(buildMessage("fatal", msg, args, this.options));
     }
   }
 }
