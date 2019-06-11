@@ -26,10 +26,12 @@
   "homepage": "https://github.com/Betterez/btrz-logger#readme",
   "dependencies": {
     "ansi-color": "^0.2.1",
+    "lodash": "4.17.11",
     "node-logentries": "^0.1.4"
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "mocha": "^2.3.2"
+    "mocha": "^2.3.2",
+    "sinon": "7.3.2"
   }
 }
