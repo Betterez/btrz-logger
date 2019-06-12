@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "postversion": "git push origin master && git push --tags",
-    "test": "mocha",
-    "test-w": "mocha -w"
+    "test": "mocha --exit",
+    "test-w": "mocha -w --exit"
   },
   "repository": {
     "type": "git",
@@ -31,8 +31,8 @@
   },
   "devDependencies": {
     "chance": "1.0.18",
-    "chai": "^3.5.0",
-    "mocha": "^2.3.2",
+    "chai": "4.2.0",
+    "mocha": "6.1.4",
     "sinon": "7.3.2"
   }
 }
