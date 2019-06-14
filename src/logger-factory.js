@@ -9,22 +9,26 @@ const {CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT} = require("../constants
 class LoggerFactory {
 
   constructor(options) {
-    const {serverId, logEntriesToken, outputDestinations} = options;
+    const {serverId, logEntriesToken, outputDestinations, level} = options;
 
     this.serverId = serverId;
     this.logEntriesToken = logEntriesToken;
     this.outputDestinations = outputDestinations;
+    this.level = level;
   }
 
   create(options = {}) {
-    const {outputDestinations, traceId} = options;
+    const {outputDestinations, traceId, level} = options;
+
     const _outputDestinations = outputDestinations || this.outputDestinations;
+    const _level = level || this.level;
 
     assert(Array.isArray(_outputDestinations) && _outputDestinations.length > 0, "an array of one or more outputDestinations is required");
 
     const logger = new Logger({
       serverId: this.serverId,
-      traceId
+      traceId,
+      level: _level
     });
 
     for (const destination of _outputDestinations) {

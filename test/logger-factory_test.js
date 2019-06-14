@@ -3,7 +3,8 @@ const Chance = require("chance");
 const chance = new Chance();
 const sinon = require("sinon");
 const sandbox = sinon.createSandbox();
-const {ALL_OUTPUT_DESTINATIONS, CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT} = require("../constants");
+const {ALL_OUTPUT_DESTINATIONS, CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE,
+  LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY} = require("../constants");
 const {ConsoleLogger} = require("../src/console-logger");
 const {LogEntriesLogger} = require("../src/log-entries-logger");
 const {SilentLogger} = require("../src/silent-logger");
@@ -43,9 +44,12 @@ describe("LoggerFactory", () => {
 
   describe(".create()", () => {
     let loggerFactory = null;
+    let level = null;
 
     beforeEach(() => {
-      loggerFactory = new LoggerFactory({serverId, logEntriesToken, outputDestinations});
+      level = chance.pickone([LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR,
+        LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY]);
+      loggerFactory = new LoggerFactory({serverId, logEntriesToken, outputDestinations, level});
     });
 
 
@@ -108,7 +112,19 @@ describe("LoggerFactory", () => {
 
     it("should return a Logger instance that has the correct 'serverId' and 'traceId'", () => {
       const logger = loggerFactory.create({traceId});
-      expect(logger.options).to.deep.eql({serverId, traceId});
+      expect(logger.options).to.deep.contain({serverId, traceId});
+    });
+
+    it("should return a Logger instance that has the specified minimum log level", () => {
+      level = chance.pickone([LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR,
+        LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY]);
+      const logger = loggerFactory.create({level});
+      expect(logger.level).to.eql(level);
+    });
+
+    it("should default to using the log level that was provided to the class constructor", () => {
+      const logger = loggerFactory.create({});
+      expect(logger.level).to.eql(level);
     });
 
     it("should allow options to be omitted", () => {
