@@ -1,6 +1,7 @@
 "use strict";
 const logCleaner = require("./log-cleaner");
-let util = require("util");
+const util = require("util");
+const process = require("process");
 
 function isString(value) {
   return value && value.toLowerCase;
@@ -48,8 +49,8 @@ function buildMessage(level, msg, args, options) {
     date: new Date().toISOString(),
     level: level,
     message: logCleaner.cleanUrlRawParameters(_msg),
-    serverId: options && options.serverId ? options.serverId : "",
-      traceId: options && options.traceId ? options.traceId : "",
+    serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
+    traceId: options && options.traceId ? options.traceId : "",
     data: serialized.length > 0 ?  serialized : ""
   };
   return tokens;
@@ -138,4 +139,4 @@ class Logger {
   }
 }
 
-exports.Logger = Logger;
+module.exports = {Logger};
