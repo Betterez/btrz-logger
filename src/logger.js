@@ -2,6 +2,7 @@
 const logCleaner = require("./log-cleaner");
 const util = require("util");
 const process = require("process");
+const incomingMessage = require("http").IncomingMessage;
 
 function isString(value) {
   return value && value.toLowerCase;
@@ -19,6 +20,9 @@ function serialize(results, args) {
   }
   if (args.stack) {
     results.push(args.stack.split("\n"));
+  } else if (args instanceof incomingMessage) {
+    results.push(util.inspect(args.headers, {showHidden: true, depth: 4}) + "\n");
+    results.push(util.inspect(args.body, {showHidden: true, depth: 4}) + "\n");
   } else if (Object.keys(args).length > 0) {
     results.push(util.inspect(args, {showHidden: true, depth: 4}) + "\n");
   } else {
