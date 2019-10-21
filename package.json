@@ -26,7 +26,7 @@
   "homepage": "https://github.com/Betterez/btrz-logger#readme",
   "dependencies": {
     "ansi-color": "^0.2.1",
-    "lodash": "4.17.11",
+    "lodash": "4.17.15",
     "node-logentries": "^0.1.4"
   },
   "devDependencies": {
