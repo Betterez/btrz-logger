@@ -1,6 +1,6 @@
 {
   "name": "btrz-logger",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "A multi-transport logger",
   "main": "index.js",
   "scripts": {
@@ -26,13 +26,13 @@
   "homepage": "https://github.com/Betterez/btrz-logger#readme",
   "dependencies": {
     "ansi-color": "^0.2.1",
-    "lodash": "4.17.11",
+    "lodash": "^4.17.15",
     "node-logentries": "^0.1.4"
   },
   "devDependencies": {
-    "chance": "1.0.18",
     "chai": "4.2.0",
-    "mocha": "6.1.4",
+    "chance": "1.0.18",
+    "mocha": "^7.1.2",
     "sinon": "7.3.2"
   }
 }
