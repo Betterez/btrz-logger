@@ -1,8 +1,12 @@
 "use strict";
 
 function cleanUrlRawParameters(buf) {
-
-  let newBuf = decodeURIComponent(buf);
+  let newBuf = buf;
+  try {
+    newBuf = decodeURIComponent(buf);
+  } catch (e) {
+    // ignore decoding errors and proceed with original data
+  }
 
   newBuf = newBuf.replace(/\[firstName\]=[^\&\"]*/g, "[firstName]=***");
   newBuf = newBuf.replace(/\[lastName\]=[^\&\"]*/g, "[lastName]=***");
