@@ -48,6 +48,8 @@ function buildMessage(level, msg, args, options) {
     _args = [_args];
   }
 
+  _args = logCleaner.cleanArgs(_args);
+
   let serialized = serialize([], _args),
     tokens = {
     date: new Date().toISOString(),
