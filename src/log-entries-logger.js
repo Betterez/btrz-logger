@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require("assert");
-const _ = require("lodash");
+const memoize = require("lodash.memoize");
 const logentries = require("node-logentries");
 const logCleaner = require("./log-cleaner");
 
@@ -10,7 +10,7 @@ const logCleaner = require("./log-cleaner");
 const cacheKeyResolver = (options) => {
   return options.token;
 };
-const createLogEntriesLogger = _.memoize((...args) => {
+const createLogEntriesLogger = memoize((...args) => {
   return logentries.logger(...args);
 }, cacheKeyResolver);
 

@@ -26,8 +26,10 @@ function cleanArgs(args) {
   try {
     _args = args.map((arg)=> {
       let newBuf = arg;
-      newBuf = newBuf.replace(/\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b/g, "regx.email.replaced");
-      newBuf = newBuf.replace(new RegExp(creditCardRegx, "gm"), "regx.ccnumber.replaced");
+      if (newBuf && newBuf.replace) {
+        newBuf = newBuf.replace(/\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b/g, "regx.email.replaced");
+        newBuf = newBuf.replace(new RegExp(creditCardRegx, "gm"), "regx.ccnumber.replaced");
+      }
       return newBuf;
     })
   } catch (e) {

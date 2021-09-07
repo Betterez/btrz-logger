@@ -1,7 +1,4 @@
-"use strict";
-
 describe("logCleaner", (done) => {
-
   const logCleaner = require("../src/log-cleaner");
   const expect = require("chai").expect
   let testString = "";
@@ -107,6 +104,11 @@ describe("logCleaner", (done) => {
       expect(cleanBuffer).to.include("8111111111111111");
       expect(cleanBuffer).to.not.include("regx.ccnumber.replaced");
       done();
-    });          
+    });
+    
+    it("should work fine and log an Error object", () => {
+      let cleanBuffer = logCleaner.cleanArgs([new Error("THIS_ERROR")]);
+      expect(cleanBuffer[0].message).to.include("THIS_ERROR");
+    });
   });
 });

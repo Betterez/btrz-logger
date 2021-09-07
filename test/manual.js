@@ -1,9 +1,5 @@
-"use strict";
-
 describe("console", function () {
-
   let logger;
-
   beforeEach(function () {
     let Logger = require("../index").Logger,
       ConsoleLogger = require("../index").ConsoleLogger,
