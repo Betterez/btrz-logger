@@ -63,6 +63,14 @@ function buildMessage(level, msg, args, options) {
 }
 
 class Logger {
+  static LogLevel() {
+    return {
+      DEBUG: "debug",
+      INFO: "info",
+      ERROR: "error",
+      FATAL: "fatal"
+    }
+  }
   constructor(options) {
     this.options = options;
     this.loggers = [];
