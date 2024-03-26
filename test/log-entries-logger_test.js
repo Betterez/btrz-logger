@@ -37,5 +37,37 @@ describe("LogEntriesLogger", () => {
       let logEntriesLogger = new LogEntriesLogger({token: "d4d3c79f-fbdd-41f5-91ec-6a3dc849166d"});
       expect(logEntriesLogger.logger.log).to.be.a("function");
     });
+    it("should log level info", () => {
+      try {
+        let logEntriesLogger = new LogEntriesLogger({token: "d4d3c79f-fbdd-41f5-91ec-6a3dc849166d"});
+        logEntriesLogger.logger.log("info", "test");
+      } catch (e) {
+        expect(1).to.equal(2);
+      }
+    });
+    it("should log level error", () => {
+      try {
+        let logEntriesLogger = new LogEntriesLogger({token: "d4d3c79f-fbdd-41f5-91ec-6a3dc849166d"});
+        logEntriesLogger.logger.log("error", "test");
+      } catch (e) {
+        expect(1).to.equal(2);
+      }
+    });
+    it("should log level debug", () => {
+      try {
+        let logEntriesLogger = new LogEntriesLogger({token: "d4d3c79f-fbdd-41f5-91ec-6a3dc849166d"});
+        logEntriesLogger.logger.log("debug", "test");
+      } catch (e) {
+        expect(1).to.equal(2);
+      }
+    });
+    it("should log level fatal", () => {
+      try {
+        let logEntriesLogger = new LogEntriesLogger({token: "d4d3c79f-fbdd-41f5-91ec-6a3dc849166d"});
+        logEntriesLogger.logger.log("fatal", "test");
+      } catch (e) {
+        expect(1).to.equal(2);
+      }
+    });
   });
 });

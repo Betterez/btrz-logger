@@ -18,6 +18,7 @@ const cacheKeyResolver = (options) => {
 const createLogEntriesLogger = memoize((args) => {
   return new Logger({
     token: args.token,
+    levels: args.levels,
     region: 'eu'
   })
 }, cacheKeyResolver);
