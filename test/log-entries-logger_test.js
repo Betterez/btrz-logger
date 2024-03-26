@@ -32,5 +32,10 @@ describe("LogEntriesLogger", () => {
       expect(logEntriesLogger2.logger).to.not.be.eql(logEntriesLogger4.logger);
       expect(logEntriesLogger2.logger).to.not.be.eql(logEntriesLogger5.logger);
     });
+
+    it("should throw an error if the LogEntries connection fails", () => {
+      let logEntriesLogger = new LogEntriesLogger({token: "d4d3c79f-fbdd-41f5-91ec-6a3dc849166d"});
+      expect(logEntriesLogger.logger.log).to.be.a("function");
+    });
   });
 });
