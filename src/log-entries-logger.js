@@ -1,17 +1,25 @@
-"use strict";
-
 const assert = require("assert");
 const memoize = require("lodash.memoize");
-const logentries = require("node-logentries");
+const Logger = require("r7insight_node");
 const logCleaner = require("./log-cleaner");
+/*
+var Logger = require('r7insight_node');
+var log = new Logger({
+  token: 'Your log token will display here',
+  region: 'eu'
+});
+*/
 
 // We memoize the function that creates connections to Logentries so that we only create one connection to Logentries for each unique
 // api token
 const cacheKeyResolver = (options) => {
   return options.token;
 };
-const createLogEntriesLogger = memoize((...args) => {
-  return logentries.logger(...args);
+const createLogEntriesLogger = memoize((args) => {
+  return new Logger({
+    token: args.token,
+    region: 'eu'
+  })
 }, cacheKeyResolver);
 
 

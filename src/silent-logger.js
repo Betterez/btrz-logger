@@ -1,7 +1,4 @@
-"use strict";
-
 class SilentLogger {
-
   log() {}
 
   debug() {}

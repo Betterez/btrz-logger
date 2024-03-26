@@ -1,5 +1,3 @@
-"use strict";
-
 const logCleaner = require("./log-cleaner");
 let util = require("util"),
   color = require("ansi-color").set,

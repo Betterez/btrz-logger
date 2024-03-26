@@ -1,6 +1,5 @@
 const assert = require("assert");
 
-
 function getTraceId(req) {
   let traceId = null;
   const amazonTraceId = req.headers["x-amzn-trace-id"];
@@ -11,7 +10,6 @@ function getTraceId(req) {
 
   return traceId;
 }
-
 
 function expressMiddleware(loggerFactory) {
   assert(loggerFactory, "loggerFactory is required");
@@ -29,7 +27,6 @@ function expressMiddleware(loggerFactory) {
     return next();
   };
 }
-
 
 module.exports = {
   expressMiddleware

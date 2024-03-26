@@ -5,9 +5,7 @@ const {LogEntriesLogger} = require("../src/log-entries-logger");
 const {SilentLogger} = require("../src/silent-logger");
 const {CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT} = require("../constants");
 
-
 class LoggerFactory {
-
   constructor(options) {
     const {serverId, logEntriesToken, outputDestinations, level} = options;
 

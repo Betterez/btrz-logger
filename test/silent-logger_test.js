@@ -1,9 +1,6 @@
-"use strict";
-
 describe("SilentLogger", () => {
-
-  const SilentLogger = require("../index").SilentLogger,
-    expect = require("chai").expect;
+  const {SilentLogger} = require("../index");
+  const {expect} = require("chai");
 
   it("should respond to .log", () => {
     let logger = new SilentLogger();

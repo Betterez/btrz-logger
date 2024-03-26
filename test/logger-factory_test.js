@@ -1,17 +1,14 @@
-const {expect} = require("chai");
-const Chance = require("chance");
-const chance = new Chance();
-const sinon = require("sinon");
-const sandbox = sinon.createSandbox();
-const {ALL_OUTPUT_DESTINATIONS, CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE,
-  LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY} = require("../constants");
-const {ConsoleLogger} = require("../src/console-logger");
-const {LogEntriesLogger} = require("../src/log-entries-logger");
-const {SilentLogger} = require("../src/silent-logger");
-const {LoggerFactory} = require("../src/logger-factory");
-
-
 describe("LoggerFactory", () => {
+  const {expect} = require("chai");
+  const Chance = require("chance");
+  const chance = new Chance();
+  const {ALL_OUTPUT_DESTINATIONS, CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE,
+    LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY} = require("../constants");
+  const {ConsoleLogger} = require("../src/console-logger");
+  const {LogEntriesLogger} = require("../src/log-entries-logger");
+  const {SilentLogger} = require("../src/silent-logger");
+  const {LoggerFactory} = require("../src/logger-factory");
+
   let serverId = null;
   let traceId = null;
   let logEntriesToken = null;
@@ -20,12 +17,8 @@ describe("LoggerFactory", () => {
   beforeEach(() => {
     serverId = chance.hash();
     traceId = chance.hash();
-    logEntriesToken = chance.hash();
+    logEntriesToken = chance.guid();
     outputDestinations = ALL_OUTPUT_DESTINATIONS;
-  });
-
-  afterEach(() => {
-    sandbox.restore();
   });
 
   describe("constructor", () => {

@@ -1,4 +1,3 @@
-"use strict";
 const logCleaner = require("./log-cleaner");
 const util = require("util");
 const process = require("process");

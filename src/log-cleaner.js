@@ -1,5 +1,3 @@
-"use strict";
-
 function cleanUrlRawParameters(buf) {
   let newBuf = buf;
   try {

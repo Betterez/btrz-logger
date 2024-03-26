@@ -1,6 +1,6 @@
 describe("logCleaner", (done) => {
   const logCleaner = require("../src/log-cleaner");
-  const expect = require("chai").expect
+  const {expect} = require("chai")
   let testString = "";
   let testArgs;
 

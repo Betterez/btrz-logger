@@ -1,15 +1,13 @@
 describe("console", function () {
-  let logger;
+  let logger = null;
   beforeEach(function () {
-    let Logger = require("../index").Logger,
-      ConsoleLogger = require("../index").ConsoleLogger,
-      LogEntriesLogger = require("../index").LogEntriesLogger;
+    const {Logger} = require("../index");
+    const {ConsoleLogger} = require("../index");
     logger = new Logger({
       serverId: "12345",
       traceId: "trace_id_here"
     });
     logger.addLogger(new ConsoleLogger());
-    logger.addLogger(new LogEntriesLogger({token: "fake-token-here"}));
   });
 
   it("should log to console", function () {
