@@ -32,6 +32,7 @@
     "r7insight_node": "^3.3.1"
   },
   "devDependencies": {
+    "axios": "^1.7.2",
     "chai": "4.3.4",
     "chance": "1.1.11",
     "mocha": "10.4.0"

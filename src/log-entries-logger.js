@@ -24,14 +24,28 @@ const createLogEntriesLogger = memoize((args) => {
 }, cacheKeyResolver);
 
 
+function getCallee(location = "") {
+  if (!location || typeof location !== "string") {
+    return "";
+  }
+  const result = /\((.*:[0-9]*:[0-9]*)\)$/gi.exec(location);
+  return result ? result[1] : "";
+}
+
 function stringifyTokens(tokens) {
-  return {
+  const stringifyTokens = {
     date: `"${tokens.date}"`,
     message: `"${tokens.message}"`,
     serverId: `"${tokens.serverId}"`,
     traceId: `"${tokens.traceId}"`,
     data: tokens.data
   };
+
+  if (tokens.location &&  tokens.location.length >= 3) {
+    stringifyTokens.callee = `"${getCallee(tokens.location[3])}"`;
+  }
+
+  return stringifyTokens;
 }
 
 

@@ -1,5 +1,6 @@
 describe("logCleaner", (done) => {
   const logCleaner = require("../src/log-cleaner");
+  const axios = require("axios");
   const {expect} = require("chai")
   let testString = "";
   let testArgs;
@@ -9,7 +10,7 @@ describe("logCleaner", (done) => {
     beforeEach(() => {
       testString = '[btrz-vue-websales-res] serverId="localhost" remoteaddr="::ffff:127.0.0.1" xapikey="-" responsetime=688.9 date="2019-02-25T13:55:50.468Z" traceId="-" method=POST url="/cart/4f74a235b0dffc0210000015/cart?productFamily=reservation&productId=4fba465b0164ad3a55000003&type=oneway&channel=websales&departureDate=2019-02-28&from=51ed2ae7cf2c819d5e000003&to=51ed2b08cf2c819d5e000009&fares=4f74b718b0dffc0210000041:1&hasAirlines=false&hasSeatmaps=false&passengers[0][fareId]=4f74b718b0dffc0210000041&passengers[0][fare]=Adults&passengers[0][ssrs]=&passengers[0][firstName]=John,%20Jr.&passengers[0][lastName]=Mc%27%20Snow&passengers[0][email]=johnSnow@winterfell.com&=on" http=1.1 status=302 responselength=164 referrer="http://localhost:8000/cart/4f74a235b0dffc0210000015/reservation/4fba465b0164ad3a55000003/passengers?productFamily=reservation&productId=4fba465b0164ad3a55000003&type=oneway&channel=websales&departureDate=2019-02-28&from=51ed2ae7cf2c819d5e000003&to=51ed2b08cf2c819d5e000009&fares=4f74b718b0dffc0210000041%3A1&hasAirlines=false&hasSeatmaps=false&departureTrip=eyJhY2NvdW50SWQiOiI0Zjc0YTIzNWIwZGZmYzAyMTAwMDAwMTUiLCJwcm9kdWN0SWQiOiI0ZmJhNDY1YjAxNjRhZDNhNTUwMDAwMDMiLCJvcmlnaW5JZCI6IjUxZWQyYWU3Y2YyYzgxOWQ1ZTAwMDAwMyIsImRlc3RpbmF0aW9uSWQiOiI1MWVkMmIwOGNmMmM4MTlkNWUwMDAwMDkiLCJmYXJlSWRzIjoiNGY3NGI3MThiMGRmZmMwMjEwMDAwMDQxOjEiLCJkZXBhcnR1cmVEYXRlIjoiMjAxOS0wMi0yOCIsImRlcGFydHVyZVRpbWUiOiIwMDoyMCIsInRyaXBEaXJlY3Rpb24iOiJvdXRib3VuZCIsImNoYW5uZWwiOiJ3ZWJzYWxlcyIsInNlZ21lbnRzIjpbeyJyb3V0ZUlkIjoiNTFlZDJiZTNjZjJjODE5ZDVlMDAwMDEwIiwic2NoZWR1bGVJZCI6Ik1vcm5pbmciLCJvcmlnaW4iOiJCZWxsdmlldyIsImRlc3RpbmF0aW9uIjoiQmVuZCJ9XSwiZmFyZXMiOlt7ImlkIjoiNGY3NGI3MThiMGRmZmMwMjEwMDAwMDQxIiwidmFsdWUiOjUyNDcwMDB9XSwiZmFyZUNsYXNzZXMiOltdLCJ0aWNrZXRUeXBlIjoib25ld2F5In0&passengers%5B0%5D%5BfareId%5D=4f74b718b0dffc0210000041&passengers%5B0%5D%5Bfare%5D=Adults&passengers%5B0%5D%5Bssrs%5D=&passengers%5B0%5D%5BfirstName%5D=John%2C%20Jr.&passengers%5B0%5D%5BlastName%5D=Mc%27%20Snow&passengers%5B0%5D%5Bemail%5D=johnSnow%40winterfell.com&=on" useragent="Mozilla/5.0 (X11; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0"';
     });
-    
+
     it("should keep the product information", (done) => {
       let cleanBuffer = logCleaner.cleanUrlRawParameters(testString);
       expect(cleanBuffer).to.include("productFamily=reservation&productId=4fba465b0164ad3a55000003&type=oneway");
@@ -49,7 +50,7 @@ describe("logCleaner", (done) => {
     });
   });
 
-  describe("cleanArgs::clean_credit cards and emails", (done) => {
+  describe("cleanArgs::clean_credit cards, request and emails", (done) => {
     it("should remove the (Visa credit card) on a given buffer", (done) => {
       testArgs = [`"ccnumber": "4111111111111111"`];
       let cleanBuffer = logCleaner.cleanArgs(testArgs);
@@ -65,7 +66,7 @@ describe("logCleaner", (done) => {
       expect(cleanBuffer[0]).to.include("regx.ccnumber.replaced");
       done();
     });
-    
+
     it("should remove the (Amex credit card) on a given buffer", (done) => {
       testArgs = [`"ccnumber": "342011111111111"`];
       let cleanBuffer = logCleaner.cleanArgs(testArgs);
@@ -105,10 +106,84 @@ describe("logCleaner", (done) => {
       expect(cleanBuffer).to.not.include("regx.ccnumber.replaced");
       done();
     });
-    
+
     it("should work fine and log an Error object", () => {
       let cleanBuffer = logCleaner.cleanArgs([new Error("THIS_ERROR")]);
       expect(cleanBuffer[0].message).to.include("THIS_ERROR");
     });
+
+    it("should remove flagged fields in objects", () => {
+      const objArg = {
+        result: 'valid',
+        reason: 'accepted_email',
+        disposable: 'false',
+        accept_all: 'false',
+        role: 'false',
+        free: 'true',
+        email: 'some-user@betterez.com',
+        user: 'some-user',
+        domain: 'betterez.com',
+        mx_record: 'gmail-smtp-in.l.google.com',
+        mx_domain: 'google.com',
+        safe_to_send: 'true',
+        did_you_mean: 'another-user',
+        success: 'true',
+        message: ''
+      };
+      let cleanBuffer = logCleaner.cleanArgs([objArg]);
+      expect(Object.keys(cleanBuffer[0])).to.be.same.length(Object.keys(objArg).length)
+      expect(cleanBuffer[0].email).to.eql("***");
+      expect(cleanBuffer[0].user).to.eql("***");
+      expect(cleanBuffer[0].did_you_mean).to.eql("***");
+    })
+
+    it("should remove sensitive data in nested objects", () => {
+      const objArg = {
+        status: "ok",
+        result: {
+          raw: 1,
+          info: {
+            password: "some-secret",
+            user: "admin",
+            email: "some-admin@betterez.com",
+          }
+        }
+      };
+      let cleanBuffer = logCleaner.cleanArgs([objArg]);
+      expect(Object.keys(cleanBuffer[0])).to.be.same.length(Object.keys(objArg).length)
+      expect(cleanBuffer[0].result.info.email).to.eql("***");
+      expect(cleanBuffer[0].result.info.user).to.eql("***");
+      expect(cleanBuffer[0].result.info.password).to.eql("***");
+    })
+
+    it("should remove emails in JSON.stringify strings inside objects", () => {
+      const objArg = {
+        status: "ok",
+        result: {
+          raw: 1,
+          info: `{"info":{"user":"admin","email":"some-admin@betterez.com"}}`
+        }
+      };
+      let cleanBuffer = logCleaner.cleanArgs([objArg]);
+      expect(Object.keys(cleanBuffer[0])).to.be.same.length(Object.keys(objArg).length)
+      expect(cleanBuffer[0].result.info).to.not.include("some-admin@betterez.com");
+    })
+
+    it("should simplify AxiosErrors and not return sensitive headers", async () => {
+      try {
+        // This will fail with a 400 Unauthorized response.
+        const request = await axios.request({
+          method: "POST",
+          baseURL: "https://sandbox-api.betterez.com",
+          url: "/sales",
+          params: {
+            test1: 123
+          }
+        });
+      } catch (error) {
+        let cleanBuffer = logCleaner.cleanArgs([error]);
+        expect(cleanBuffer[0]).to.eql("[ERR_BAD_REQUEST] Request failed with status 401: [POST] https://sandbox-api.betterez.com/sales\nUnauthorized");
+      }
+    })
   });
 });

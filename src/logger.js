@@ -7,6 +7,12 @@ function isString(value) {
   return value && value.toLowerCase;
 }
 
+function getStackTrace () {
+  let stack = new Error().stack || '';
+  stack = stack.split('\n').map(function (line) { return line.trim(); });
+  return stack.splice(stack[0] == 'Error' ? 2 : 1);
+}
+
 function serialize(results, args) {
   if (!args) {
     return results;
@@ -29,7 +35,7 @@ function serialize(results, args) {
   }
 }
 
-function buildMessage(level, msg, args, options) {
+function buildMessage(level, msg, args, options, location) {
   let _msg = msg,
     _args = args;
 
@@ -56,7 +62,8 @@ function buildMessage(level, msg, args, options) {
     message: logCleaner.cleanUrlRawParameters(_msg),
     serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
     traceId: options && options.traceId ? options.traceId : "",
-    data: serialized.length > 0 ?  serialized : ""
+    data: serialized.length > 0 ?  serialized : "",
+    location: getStackTrace()
   };
   return tokens;
 }
