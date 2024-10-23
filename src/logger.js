@@ -1,7 +1,7 @@
 const logCleaner = require("./log-cleaner");
 const util = require("util");
 const process = require("process");
-const incomingMessage = require("http").IncomingMessage;
+const {IncomingMessage} = require("http");
 
 function isString(value) {
   return value && value.toLowerCase;
@@ -25,7 +25,7 @@ function serialize(results, args) {
   }
   if (args.stack) {
     results.push(args.stack.split("\n"));
-  } else if (args instanceof incomingMessage) {
+  } else if (args instanceof IncomingMessage) {
     results.push(util.inspect(args.headers, {showHidden: true, depth: 4}) + "\n");
     results.push(util.inspect(args.body, {showHidden: true, depth: 4}) + "\n");
   } else if (Object.keys(args).length > 0) {
@@ -55,8 +55,8 @@ function buildMessage(level, msg, args, options, location) {
 
   _args = logCleaner.cleanArgs(_args);
 
-  let serialized = serialize([], _args),
-    tokens = {
+  let serialized = serialize([], _args);
+  const tokens = {
     date: new Date().toISOString(),
     level: level,
     message: logCleaner.cleanUrlRawParameters(_msg),
@@ -77,6 +77,7 @@ class Logger {
       FATAL: "fatal"
     }
   }
+
   constructor(options) {
     this.options = options;
     this.loggers = [];
@@ -92,9 +93,9 @@ class Logger {
     });
   }
 
-  _log(msg) {
+  _log(tokens) {
     this.loggers.forEach((logger) => {
-      logger.log(msg);
+      logger.log(tokens);
     });
   }
 
