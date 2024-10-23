@@ -1,6 +1,6 @@
 {
   "name": "btrz-logger",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "A multi-transport logger",
   "main": "index.js",
   "scripts": {
