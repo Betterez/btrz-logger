@@ -20,7 +20,7 @@ class ConsoleLogger {
 
   // Used for Express logger
   write(buf) {
-    let cleanBuf = logCleaner.cleanUrlRawParameters(buf);
+    let cleanBuf = logCleaner.sanitizeUrlRawParameters(buf);
     console.error(cleanBuf);
   }
 }

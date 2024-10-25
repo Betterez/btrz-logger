@@ -53,13 +53,13 @@ function buildMessage(level, msg, args, options, location) {
     _args = [_args];
   }
 
-  _args = logCleaner.cleanArgs(_args);
+  _args = logCleaner.sanitize(_args);
 
   let serialized = serialize([], _args);
   const tokens = {
     date: new Date().toISOString(),
     level: level,
-    message: logCleaner.cleanUrlRawParameters(_msg),
+    message: logCleaner.sanitizeUrlRawParameters(_msg),
     serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
     traceId: options && options.traceId ? options.traceId : "",
     data: serialized.length > 0 ?  serialized : "",
