@@ -7,6 +7,8 @@ describe("LoggerFactory", () => {
   const {ConsoleLogger} = require("../src/console-logger");
   const {LogEntriesLogger} = require("../src/log-entries-logger");
   const {SilentLogger} = require("../src/silent-logger");
+  const {Logger} = require("../src/logger");
+  const {LoggerForTests} = require("../src/logger-for-tests");
   const {LoggerFactory} = require("../src/logger-factory");
 
   let serverId = null;
@@ -118,6 +120,20 @@ describe("LoggerFactory", () => {
     it("should default to using the log level that was provided to the class constructor", () => {
       const logger = loggerFactory.create({});
       expect(logger.level).to.eql(level);
+    });
+
+    it("should return an instance of the 'Logger' class", () => {
+      loggerFactory = new LoggerFactory({outputDestinations: [CONSOLE_OUTPUT]});
+      const logger = loggerFactory.create({});
+      expect(logger).to.be.an.instanceOf(Logger);
+      expect(logger.constructor.name).to.eql("Logger");
+    });
+
+    it("should return an instance of 'LoggerForTests' when the 'isRunningTests' option is true", () => {
+      loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT]});
+      const logger = loggerFactory.create({});
+      expect(logger).to.be.an.instanceOf(LoggerForTests);
+      expect(logger.constructor.name).to.eql("LoggerForTests");
     });
 
     it("should allow options to be omitted", () => {

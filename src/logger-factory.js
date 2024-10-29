@@ -1,5 +1,6 @@
 const assert = require("assert");
 const {Logger} = require("../src/logger");
+const {LoggerForTests} = require("../src/logger-for-tests");
 const {ConsoleLogger} = require("../src/console-logger");
 const {LogEntriesLogger} = require("../src/log-entries-logger");
 const {SilentLogger} = require("../src/silent-logger");
@@ -7,12 +8,13 @@ const {CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT} = require("../constants
 
 class LoggerFactory {
   constructor(options) {
-    const {serverId, logEntriesToken, outputDestinations, level} = options;
+    const {serverId, logEntriesToken, outputDestinations, level, isRunningTests} = options;
 
     this.serverId = serverId;
     this.logEntriesToken = logEntriesToken;
     this.outputDestinations = outputDestinations;
     this.level = level;
+    this.isRunningTests = isRunningTests;
   }
 
   create(options = {}) {
@@ -23,11 +25,20 @@ class LoggerFactory {
 
     assert(Array.isArray(_outputDestinations) && _outputDestinations.length > 0, "an array of one or more outputDestinations is required");
 
-    const logger = new Logger({
-      serverId: this.serverId,
-      traceId,
-      level: _level
-    });
+    let logger;
+    if (this.isRunningTests) {
+      logger = new LoggerForTests({
+        serverId: this.serverId,
+        traceId,
+        level: _level
+      });
+    } else {
+      logger = new Logger({
+        serverId: this.serverId,
+        traceId,
+        level: _level
+      });
+    }
 
     for (const destination of _outputDestinations) {
       switch (destination) {

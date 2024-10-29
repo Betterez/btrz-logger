@@ -18,6 +18,8 @@ describe("LoggerForTests", () => {
     };
     loggerForTests = new LoggerForTests();
     loggerForTests.addLogger(mockLogDestination);
+
+    LoggerForTests.onTestFinished({})
   });
 
   afterEach(() => {
@@ -27,7 +29,7 @@ describe("LoggerForTests", () => {
   for (const logLevel of Object.values(Logger.LogLevel())) {
     it(`should correctly handle a ${logLevel} log`, () => {
       loggerForTests[logLevel]("Some message");
-      loggerForTests.flushBuffer();
+      LoggerForTests.flushBuffer();
 
       expect(mockLogDestination.log).to.have.been.calledOnce;
       const logTokens = mockLogDestination.log.firstCall.args[0];
@@ -43,7 +45,7 @@ describe("LoggerForTests", () => {
     loggerForTests.error("Some other message");
     expect(mockLogDestination.log).not.to.have.been.called;
 
-    loggerForTests.flushBuffer();
+    LoggerForTests.flushBuffer();
     expect(mockLogDestination.log).to.have.been.calledTwice;
     expect(mockLogDestination.log.firstCall.args[0]).to.deep.contain({
       level: "info",
@@ -83,7 +85,7 @@ describe("LoggerForTests", () => {
     expect(mockLogDestination.log).to.have.been.calledOnce;
     mockLogDestination.log.reset();
 
-    loggerForTests.onTestFinished({});
+    LoggerForTests.onTestFinished({});
     loggerForTests.info("Some info message");
     expect(mockLogDestination.log).not.to.have.been.called;
   });
@@ -93,24 +95,68 @@ describe("LoggerForTests", () => {
     loggerForTests.debug("Some debug message");
     expect(mockLogDestination.log).not.to.have.been.called;
 
-    loggerForTests.onTestFinished({state: "failed"});
+    LoggerForTests.onTestFinished({state: "failed"});
     expect(mockLogDestination.log).to.have.been.calledTwice;
   });
 
   it("should not output any logs when onTestFinished() is called, and the test has succeeded", () => {
     loggerForTests.info("Some info message");
     loggerForTests.debug("Some debug message");
-    loggerForTests.onTestFinished({state: "passed"});
+    LoggerForTests.onTestFinished({state: "passed"});
     expect(mockLogDestination.log).not.to.have.been.called;
   });
 
   it("should clear the log buffer when onTestFinished() is called, and the test has succeeded", () => {
     loggerForTests.info("Some info message");
     loggerForTests.debug("Some debug message");
-    loggerForTests.onTestFinished({state: "passed"});
+    LoggerForTests.onTestFinished({state: "passed"});
     expect(mockLogDestination.log).not.to.have.been.called;
 
-    loggerForTests.flushBuffer();
+    LoggerForTests.flushBuffer();
     expect(mockLogDestination.log).not.to.have.been.called;
+  });
+
+  it("should output the buffered logs from all instances of the logger in the correct order when onTestFinished() is called, and the test has failed", () => {
+    const loggerOne = new LoggerForTests();
+    const loggerTwo = new LoggerForTests();
+
+    loggerOne.addLogger(mockLogDestination);
+    loggerTwo.addLogger(mockLogDestination);
+
+    loggerOne.info("Message A");
+    loggerTwo.info("Message B");
+    loggerTwo.info("Message C");
+    loggerOne.info("Message D");
+    loggerTwo.info("Message E");
+
+    LoggerForTests.onTestFinished({state: "failed"});
+
+    expect(mockLogDestination.log).to.have.callCount(5);
+    const logMessagesInOrder = mockLogDestination.log.args.map((arguments) => arguments[0].message);
+    expect(logMessagesInOrder).to.eql([
+      "Message A",
+      "Message B",
+      "Message C",
+      "Message D",
+      "Message E"
+    ]);
+  });
+
+  it("should clear the buffer from all instances of the logger when onTestFinished() is called", () => {
+    const loggerOne = new LoggerForTests();
+    const loggerTwo = new LoggerForTests();
+
+    loggerOne.addLogger(mockLogDestination);
+    loggerTwo.addLogger(mockLogDestination);
+
+    loggerOne.info("Message A");
+    loggerTwo.info("Message B");
+
+    LoggerForTests.onTestFinished({state: "passed"});
+    expect(mockLogDestination.log).to.have.callCount(0);
+
+    // Check that the buffer was cleared by trying to flush all buffered logs
+    LoggerForTests.flushBuffer();
+    expect(mockLogDestination.log).to.have.callCount(0);
   });
 });
