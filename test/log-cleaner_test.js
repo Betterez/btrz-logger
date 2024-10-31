@@ -217,6 +217,25 @@ describe("logCleaner", (done) => {
       }
     });
 
+    it("should correctly sanitize an AxiosError which resulted from a request which had no 'baseURL'", async () => {
+      try {
+        // This will fail with a 400 Unauthorized response.
+        await axios.request({
+          method: "POST",
+          url: "https://sandbox-api.betterez.com/sales",
+          params: {
+            test1: 123
+          }
+        });
+      } catch (error) {
+        let sanitizedValue = logCleaner.sanitize([error]);
+        expect(sanitizedValue[0]).to.eql("[ERR_BAD_REQUEST] Request failed with status 401: [POST] https://sandbox-api.betterez.com/sales\nUnauthorized");
+        return;
+      }
+
+      expect.fail("The API call above should have failed.");
+    });
+
     it("should not mutate its input when the input contains an AxiosError", async () => {
       const error = new AxiosError();
       error.code = "ERR_BAD_REQUEST";

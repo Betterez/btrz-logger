@@ -3,7 +3,6 @@ const MAX_LOG_BODY_LENGTH = 4096;
 const SANITIZATION_TIME_BUDGET_IN_MILLISECONDS = 10;
 const TRUNCATED_MESSAGE = "[TRUNCATED]";
 const creditCardRegx = `(?:4[0-9]{12}(?:[0-9]{3})?|(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11}|6(?:011|5[0-9]{2})[0-9]{12})`;
-const emailRegx = `(?:4[0-9]{12}(?:[0-9]{3})?|(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11}|6(?:011|5[0-9]{2})[0-9]{12})`;
 const flaggedFields = new Set(["email", "mail", "password", "ccnumber", "ccard", "credentials", "user", "firstName", "lastName", "address", "phone", "didyoumean", "createdByUserEmail", "updatedByUserEmail"]);
 
 function sanitizeUrlRawParameters(urlString) {
@@ -25,7 +24,7 @@ function sanitizeUrlRawParameters(urlString) {
  * @param {Number} startTime
  */
 function _sanitizeAxiosError(error, startTime) {
-  const {method, baseURL, url} = /** @type {InternalAxiosRequestConfig} */ error.config;
+  const {method = "UNKNOWN_HTTP_METHOD", baseURL = "", url = ""} = /** @type {InternalAxiosRequestConfig} */ error.config;
   let errorStr = `[${error.code}] Request failed`;
   let sanitizedResponseData = "";
 
@@ -45,7 +44,7 @@ function _sanitizeAxiosError(error, startTime) {
     }
   }
 
-  errorStr = `${errorStr}: [${method.toUpperCase()}] ${baseURL}${!baseURL.endsWith("/") && !url.startsWith("/") ? "/" : ""}${url}`;
+  errorStr = `${errorStr}: [${method.toUpperCase()}] ${baseURL}${baseURL && !baseURL.endsWith("/") && !url.startsWith("/") ? "/" : ""}${url}`;
 
   return sanitizedResponseData ? `${errorStr}\n${sanitizedResponseData}` : errorStr;
 }
