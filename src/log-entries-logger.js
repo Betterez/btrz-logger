@@ -34,15 +34,15 @@ function getCallee(location = "") {
 
 function stringifyTokens(tokens) {
   const stringifyTokens = {
-    date: `"${tokens.date}"`,
-    message: `"${tokens.message}"`,
-    serverId: `"${tokens.serverId}"`,
-    traceId: `"${tokens.traceId}"`,
+    date: `${tokens.date}`,
+    message: `${tokens.message}`,
+    serverId: `${tokens.serverId}`,
+    traceId: `${tokens.traceId}`,
     data: tokens.data
   };
 
   if (tokens.location &&  tokens.location.length >= 3) {
-    stringifyTokens.callee = `"${getCallee(tokens.location[3])}"`;
+    stringifyTokens.callee = `${getCallee(tokens.location[3])}`;
   }
 
   return stringifyTokens;
