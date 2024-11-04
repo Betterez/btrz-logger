@@ -1,8 +1,41 @@
 const axios = require("axios");
 const {AxiosError} = require("axios");
 const {expect} = require("chai");
+const Chance = require("chance");
 const logCleaner = require("../src/log-cleaner");
 const _ = require("lodash");
+
+const chance = new Chance();
+
+function randomCapitalization(string) {
+  return string.split("").map((character) => {
+    const shouldCapitalize = chance.bool();
+    return shouldCapitalize? character.toUpperCase() : character;
+  }).join("");
+}
+
+function trimAllLines(string) {
+  return string.split("\n").map((line) => line.trim()).join("\n");
+}
+
+function mockAxiosError() {
+  const error = new AxiosError();
+  error.code = "ERR_BAD_REQUEST";
+  error.config = {
+    method: "GET",
+    baseURL: "https://sandbox-api.betterez.com",
+    url: "/sales"
+  };
+  error.response = {
+    status: 400,
+    data: {
+      password: "some-password",
+      date: "2024-01-01T12:00:00.000Z",
+    }
+  };
+
+  return error;
+}
 
 describe("logCleaner", (done) => {
   let testString = "";
@@ -121,29 +154,46 @@ describe("logCleaner", (done) => {
       expect(sanitizedValue[0].message).to.include("THIS_ERROR");
     });
 
-    it("should remove flagged fields in objects", () => {
-      const objArg = {
-        result: 'valid',
-        reason: 'accepted_email',
-        disposable: 'false',
-        accept_all: 'false',
-        role: 'false',
-        free: 'true',
-        email: 'some-user@betterez.com',
-        user: 'some-user',
-        domain: 'betterez.com',
-        mx_record: 'gmail-smtp-in.l.google.com',
-        mx_domain: 'google.com',
-        safe_to_send: 'true',
-        did_you_mean: 'another-user',
-        success: 'true',
-        message: ''
+    it("should remove sensitive fields from objects", () => {
+      const exampleSensitiveFieldNames = ["email", "mail", "username", "password", "pass", "ccnumber", "ccard",
+        "credentials", "user", "firstname", "lastname", "address", "phone", "didyoumean", "createdbyuseremail",
+        "updatedbyuseremail", "authorization", "apikey", "x-api-key", "key", "privatekey", "token", "secret", "secrets",
+        "secret_key"].map(randomCapitalization);
+
+      const targetObject = {
+        ...Object.fromEntries(exampleSensitiveFieldNames.map(fieldName => [fieldName, chance.word()]))
       };
-      let sanitizedValue = logCleaner.sanitize([objArg]);
-      expect(Object.keys(sanitizedValue[0])).to.be.same.length(Object.keys(objArg).length)
-      expect(sanitizedValue[0].email).to.eql("***");
-      expect(sanitizedValue[0].user).to.eql("***");
-      expect(sanitizedValue[0].did_you_mean).to.eql("***");
+
+      const sanitizedValue = logCleaner.sanitize(targetObject);
+      expect(Object.keys(sanitizedValue)).to.have.same.length(Object.keys(targetObject).length);
+      expect(sanitizedValue).to.eql({
+        ...Object.fromEntries(exampleSensitiveFieldNames.map(fieldName => [fieldName, "***"]))
+      });
+    });
+
+    it("should recognize sensitive fields in objects when the field name contains non-alphanumeric characters", () => {
+      const targetObject = {
+        "__p-a=s:s_ wo+rd;": "some password"
+      };
+      const sanitizedValue = logCleaner.sanitize(targetObject);
+      expect(sanitizedValue).to.eql({
+        "__p-a=s:s_ wo+rd;": "***"
+      });
+    });
+
+    it("should not change non-sensitive fields in objects", () => {
+      const targetObject = {
+        password: "some password",
+        passengerId: "1234",
+        creationDate: "2024-01-01T12:00:00.000Z",
+      };
+
+      const sanitizedValue = logCleaner.sanitize(targetObject);
+      expect(sanitizedValue).to.eql({
+        password: "***",
+        passengerId: "1234",
+        creationDate: "2024-01-01T12:00:00.000Z",
+      });
     });
 
     it("should not modify its input when the input contains an object", () => {
@@ -185,7 +235,7 @@ describe("logCleaner", (done) => {
       expect(sanitizedValue[0].result.info.email).to.eql("***");
       expect(sanitizedValue[0].result.info.user).to.eql("***");
       expect(sanitizedValue[0].result.info.password).to.eql("***");
-    })
+    });
 
     it("should remove emails in JSON.stringify strings inside objects", () => {
       const objArg = {
@@ -198,7 +248,32 @@ describe("logCleaner", (done) => {
       let sanitizedValue = logCleaner.sanitize([objArg]);
       expect(Object.keys(sanitizedValue[0])).to.be.same.length(Object.keys(objArg).length)
       expect(sanitizedValue[0].result.info).to.not.include("some-admin@betterez.com");
-    })
+    });
+
+    it("should recognize the non-enumerable properties of an object, and return a new object which has the same list of non-enumerable properties", () => {
+      const targetObject = {
+        someProperty: "some value"
+      };
+      Object.defineProperty(targetObject, "someNonEnumerableProperty", {
+        value: "some other value",
+        enumerable: false
+      });
+
+      const sanitizedValue = logCleaner.sanitize(targetObject);
+      expect(sanitizedValue).not.to.equal(targetObject);
+      expect(sanitizedValue).to.eql({
+        someProperty: "some value",
+        // Chai does not run assertions on non-enumerable properties when using .eql(...)
+      });
+      expect(sanitizedValue).to.have.ownProperty("someNonEnumerableProperty");
+      expect(sanitizedValue.propertyIsEnumerable("someNonEnumerableProperty")).to.be.false;
+    });
+
+    it("should return Error objects without any modifications", () => {
+      const error = new Error("Some error message");
+      const sanitizedValue = logCleaner.sanitize(error);
+      expect(sanitizedValue).to.equal(error);
+    });
 
     it("should simplify AxiosErrors and not return sensitive headers", async () => {
       try {
@@ -215,6 +290,23 @@ describe("logCleaner", (done) => {
         let sanitizedValue = logCleaner.sanitize([error]);
         expect(sanitizedValue[0]).to.eql("[ERR_BAD_REQUEST] Request failed with status 401: [POST] https://sandbox-api.betterez.com/sales\nUnauthorized");
       }
+    });
+
+    it("should return the expected string when sanitizing an AxiosError which contains information about the API response that caused the error", async () => {
+      const sanitizedValue = logCleaner.sanitize(mockAxiosError());
+      expect(sanitizedValue).to.eql(trimAllLines(
+        `[ERR_BAD_REQUEST] Request failed with status 400: [GET] https://sandbox-api.betterez.com/sales
+        { password: '***', date: '2024-01-01T12:00:00.000Z' }`
+      ));
+    });
+
+    it("should truncate the result when sanitizing an AxiosError which contains a very large request body", async () => {
+      const error = mockAxiosError();
+      error.response.data = chance.string({length: 5000});
+
+      const sanitizedValue = logCleaner.sanitize(error);
+      expect(sanitizedValue).to.have.length(4096);
+      expect(sanitizedValue).to.match(/\[TRUNCATED\]$/);
     });
 
     it("should correctly sanitize an AxiosError which resulted from a request which had no 'baseURL'", async () => {
@@ -237,28 +329,14 @@ describe("logCleaner", (done) => {
     });
 
     it("should not mutate its input when the input contains an AxiosError", async () => {
-      const error = new AxiosError();
-      error.code = "ERR_BAD_REQUEST";
-      error.config = {
-        method: "GET",
-        baseURL: "https://sandbox-api.betterez.com",
-        url: "/sales"
-      };
-      error.response = {
-        status: 400,
-        data: {
-          password: "some-password",
-        }
-      };
+      const error = mockAxiosError();
 
-      const sanitizedValue = logCleaner.sanitize(error);
-      expect(sanitizedValue).to.eql(
-        `[ERR_BAD_REQUEST] Request failed with status 400: [GET] https://sandbox-api.betterez.com/sales\n{"password":"***"}`
-      );
+      logCleaner.sanitize(error);
       expect(error.response).to.eql({
         status: 400,
         data: {
           password: "some-password",
+          date: "2024-01-01T12:00:00.000Z"
         }
       });
     });
