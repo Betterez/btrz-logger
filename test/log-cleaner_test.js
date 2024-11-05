@@ -1,3 +1,4 @@
+const {IncomingMessage} = require("node:http");
 const axios = require("axios");
 const {AxiosError} = require("axios");
 const {expect} = require("chai");
@@ -273,6 +274,30 @@ describe("logCleaner", (done) => {
       const error = new Error("Some error message");
       const sanitizedValue = logCleaner.sanitize(error);
       expect(sanitizedValue).to.equal(error);
+    });
+
+    it("should simplify a NodeJS 'IncomingMessage' and return only its 'headers' and 'body'", () => {
+      const incomingMessage = new IncomingMessage();
+      incomingMessage.headers = {
+        "content-type": "application/json",
+        "x-api-key": "application/json"
+      };
+      incomingMessage.body = {
+        someProperty: "some value",
+        password: "some password",
+      };
+
+      const sanitizedValue = logCleaner.sanitize(incomingMessage);
+      expect(sanitizedValue).to.eql({
+        body: {
+          password: "***",
+          someProperty: "some value"
+        },
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": "***"
+        }
+      });
     });
 
     it("should simplify AxiosErrors and not return sensitive headers", async () => {

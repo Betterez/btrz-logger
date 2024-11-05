@@ -1,7 +1,6 @@
 const logCleaner = require("./log-cleaner");
 const util = require("util");
 const process = require("process");
-const {IncomingMessage} = require("http");
 
 function isString(value) {
   return value && value.toLowerCase;
@@ -13,25 +12,23 @@ function getStackTrace () {
   return stack.splice(stack[0] == 'Error' ? 2 : 1);
 }
 
-function serialize(results, args) {
-  if (!args) {
-    return results;
+function serialize(value) {
+  if (Array.isArray(value)) {
+    return value
+      .filter(item => item !== undefined && item !== null)
+      .map(serialize)
+      .join("\n");
   }
-  if (Array.isArray(args)) {
-    args.forEach(function (a) {
-      serialize(results, a);
-    });
-    return results;
-  }
-  if (args.stack) {
-    results.push(args.stack.split("\n"));
-  } else if (args instanceof IncomingMessage) {
-    results.push(util.inspect(args.headers, {showHidden: true, depth: 4}) + "\n");
-    results.push(util.inspect(args.body, {showHidden: true, depth: 4}) + "\n");
-  } else if (Object.keys(args).length > 0) {
-    results.push(util.inspect(args, {showHidden: true, depth: 4}) + "\n");
+
+  if (typeof value === "string" || typeof value === "number") {
+    return value;
+  } else if (!value) {
+    return "";
+  } else if (value.stack) {
+    // value is an error-like object
+    return "\n" + util.inspect(value);
   } else {
-    results.push(util.inspect(args) + "\n");
+    return util.inspect(value, {showHidden: true, depth: 4, breakLength: Infinity});
   }
 }
 
@@ -55,14 +52,14 @@ function buildMessage(level, msg, args, options, location) {
 
   _args = logCleaner.sanitize(_args);
 
-  let serialized = serialize([], _args);
+  const serializedData = serialize(_args);
   const tokens = {
     date: new Date().toISOString(),
     level: level,
     message: logCleaner.sanitizeUrlRawParameters(_msg),
     serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
     traceId: options && options.traceId ? options.traceId : "",
-    data: serialized.length > 0 ?  serialized : "",
+    data: serializedData,
     location: getStackTrace()
   };
   return tokens;

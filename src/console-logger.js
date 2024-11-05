@@ -1,20 +1,23 @@
 const logCleaner = require("./log-cleaner");
-let util = require("util"),
-  color = require("ansi-color").set,
-  colorFromLevel = {
-    info: "yellow",
-    debug: "blue",
-    error: "red",
-    fatal: "red_bg+white"
-  };
+const color = require("ansi-color").set;
+const colorFromLevel = {
+  info: "yellow",
+  debug: "blue",
+  error: "red",
+  fatal: "red_bg+white"
+};
 
 class ConsoleLogger {
   log(tokens) {
-    let msg = `${tokens.level.toUpperCase()}\t${tokens.date} \t${tokens.serverId}\t${tokens.traceId}\t${tokens.message}`;
+    let msg = `${tokens.level.toUpperCase()}\t${tokens.date} \t${tokens.serverId}\t${tokens.traceId}`;
 
-    if (tokens.data) {
-      msg += `\t${util.inspect(tokens.data)}`;
+    if (tokens.message) {
+      msg += `\t${tokens.message}`;
     }
+    if (tokens.data) {
+      msg += `\t${tokens.data}`;
+    }
+
     console.error(color(msg, colorFromLevel[tokens.level.toLowerCase()]));
   }
 
