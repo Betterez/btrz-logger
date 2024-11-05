@@ -1,5 +1,4 @@
 const logCleaner = require("./log-cleaner");
-const util = require("util");
 const process = require("process");
 
 function isString(value) {
@@ -10,26 +9,6 @@ function getStackTrace () {
   let stack = new Error().stack || '';
   stack = stack.split('\n').map(function (line) { return line.trim(); });
   return stack.splice(stack[0] == 'Error' ? 2 : 1);
-}
-
-function serialize(value) {
-  if (Array.isArray(value)) {
-    return value
-      .filter(item => item !== undefined && item !== null)
-      .map(serialize)
-      .join("\n");
-  }
-
-  if (typeof value === "string" || typeof value === "number") {
-    return value;
-  } else if (!value) {
-    return "";
-  } else if (value.stack) {
-    // value is an error-like object
-    return "\n" + util.inspect(value);
-  } else {
-    return util.inspect(value, {showHidden: true, depth: 4, breakLength: Infinity});
-  }
 }
 
 function buildMessage(level, msg, args, options, location) {
@@ -46,20 +25,13 @@ function buildMessage(level, msg, args, options, location) {
     _msg = "";
   }
 
-  if (!Array.isArray(_args)) {
-    _args = [_args];
-  }
-
-  _args = logCleaner.sanitize(_args);
-
-  const serializedData = serialize(_args);
   const tokens = {
     date: new Date().toISOString(),
     level: level,
     message: logCleaner.sanitizeUrlRawParameters(_msg),
     serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
     traceId: options && options.traceId ? options.traceId : "",
-    data: serializedData,
+    data: logCleaner.sanitize(_args),
     location: getStackTrace()
   };
   return tokens;
