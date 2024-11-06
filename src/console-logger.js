@@ -18,7 +18,7 @@ function serialize(value) {
   if (typeof value === "string" || typeof value === "number") {
     return value;
   } else if (!value) {
-    return "";
+    return util.inspect(value);
   } else if (value.stack) {
     // value is an error-like object
     return "\n" + util.inspect(value);
@@ -28,17 +28,22 @@ function serialize(value) {
 }
 
 class ConsoleLogger {
+  constructor(options = {}) {
+    this.colorize = options.colorize ?? true;
+  }
+
   log(tokens) {
     let msg = `${tokens.level.toUpperCase()}\t${tokens.date} \t${tokens.serverId}\t${tokens.traceId}`;
 
     if (tokens.message) {
       msg += `\t${tokens.message}`;
     }
-    if (tokens.data) {
+    if (tokens.data !== undefined && tokens.data !== "") {
       msg += `\t${serialize(tokens.data)}`;
     }
 
-    console.error(color(msg, colorFromLevel[tokens.level.toLowerCase()]));
+    const output = this.colorize ? color(msg, colorFromLevel[tokens.level.toLowerCase()]) : msg;
+    console.error(output);
   }
 
   // Used for Express logger

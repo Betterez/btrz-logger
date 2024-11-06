@@ -11,17 +11,22 @@ function getStackTrace () {
   return stack.splice(stack[0] == 'Error' ? 2 : 1);
 }
 
-function buildMessage(level, msg, args, options, location) {
+function buildMessage(level, msg, data, options, location) {
   let _msg = msg,
-    _args = args;
+    _data = data;
 
-  if (!isString(msg) && isString(args)) {
-    _args = msg;
-    _msg = args;
+  if (!isString(msg) && isString(data)) {
+    _data = msg;
+    _msg = data;
   }
 
-  if (!isString(msg) && !isString(args)) {
-    _args = [msg, args];
+  if (!isString(msg) && !isString(data)) {
+    if (msg !== null && msg !== undefined && data !== null && data !== undefined) {
+      _data = [msg, data];
+    } else if (msg !== null && msg !== undefined) {
+      _data = msg;
+    }
+
     _msg = "";
   }
 
@@ -31,7 +36,7 @@ function buildMessage(level, msg, args, options, location) {
     message: logCleaner.sanitizeUrlRawParameters(_msg),
     serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
     traceId: options && options.traceId ? options.traceId : "",
-    data: logCleaner.sanitize(_args),
+    data: logCleaner.sanitize(_data),
     location: getStackTrace()
   };
   return tokens;
