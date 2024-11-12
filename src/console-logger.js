@@ -43,13 +43,13 @@ class ConsoleLogger {
     }
 
     const output = this.colorize ? color(msg, colorFromLevel[tokens.level.toLowerCase()]) : msg;
-    console.error(output);
+    console.log(output);
   }
 
   // Used for Express logger
   write(buf) {
     let cleanBuf = logCleaner.sanitizeUrlRawParameters(buf);
-    console.error(cleanBuf);
+    console.log(cleanBuf);
   }
 }
 

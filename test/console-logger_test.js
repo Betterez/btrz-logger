@@ -19,7 +19,7 @@ describe("ConsoleLogger", () => {
     serverId = `server-${chance.hash({length: 4})}`;
     traceId = `trace-${chance.hash({length: 4})}`;
     consoleLogger = new ConsoleLogger({colorize: false});
-    sinon.spy(console, "error");
+    sinon.spy(console, "log");
 
     logger = new Logger({serverId, traceId});
     logger.addLogger(consoleLogger);
@@ -37,34 +37,34 @@ describe("ConsoleLogger", () => {
 
   it("should output a string containing the log level, current date, server ID, process ID, and trace ID", () => {
     logger.info("");
-    expect(console.error).to.have.been.calledOnceWith(`INFO\t${currentDate.toISOString()} \t${serverId}#${process.pid}\t${traceId}`);
+    expect(console.log).to.have.been.calledOnceWith(`INFO\t${currentDate.toISOString()} \t${serverId}#${process.pid}\t${traceId}`);
   });
 
   it("should output the message that was logged", () => {
     logger.info("Some message");
-    expect(console.error).to.have.been.calledOnceWith(`${logPrefix}\tSome message`);
+    expect(console.log).to.have.been.calledOnceWith(`${logPrefix}\tSome message`);
   });
 
   it("should serialize and output an object when one is logged", () => {
     logger.info({someProperty: "some value"});
-    expect(console.error).to.have.been.calledOnceWith(`${logPrefix}\t\n{\n  someProperty: 'some value'\n}`);
+    expect(console.log).to.have.been.calledOnceWith(`${logPrefix}\t\n{\n  someProperty: 'some value'\n}`);
   });
 
   it("should output a message with the correct severity", () => {
     logger.debug("Some message");
-    expect(console.error.args[0][0]).to.contain("DEBUG")
+    expect(console.log.args[0][0]).to.contain("DEBUG")
 
     sinon.reset();
     logger.info("Some message");
-    expect(console.error.args[0][0]).to.contain("INFO")
+    expect(console.log.args[0][0]).to.contain("INFO")
 
     sinon.reset();
     logger.error("Some message");
-    expect(console.error.args[0][0]).to.contain("ERROR")
+    expect(console.log.args[0][0]).to.contain("ERROR")
 
     sinon.reset();
     logger.fatal("Some message");
-    expect(console.error.args[0][0]).to.contain("FATAL")
+    expect(console.log.args[0][0]).to.contain("FATAL")
   });
 
   describe("data serialization", () => {
@@ -73,7 +73,7 @@ describe("ConsoleLogger", () => {
     });
 
     function expectStringWasLogged(string) {
-      expect(console.error).to.have.been.calledOnceWith(`${logPrefix}\t${string}`);
+      expect(console.log).to.have.been.calledOnceWith(`${logPrefix}\t${string}`);
     }
 
     it("should correctly serialize a string by returning the unmodified string", () => {
@@ -98,7 +98,7 @@ describe("ConsoleLogger", () => {
 
     it("should not serialize the value 'undefined'", () => {
       logger.info("Some message", undefined);
-      expect(console.error).to.have.been.calledOnceWith(logPrefix);
+      expect(console.log).to.have.been.calledOnceWith(logPrefix);
     });
 
     it("should correctly serialize an error", () => {
