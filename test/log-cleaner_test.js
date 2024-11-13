@@ -276,6 +276,12 @@ describe("logCleaner", (done) => {
       expect(sanitizedValue).to.equal(error);
     });
 
+    it("should return Date objects without any modifications", () => {
+      const date = new Date();
+      const sanitizedValue = logCleaner.sanitize(date);
+      expect(sanitizedValue).to.equal(date);
+    });
+
     it("should simplify a NodeJS 'IncomingMessage' and return only its 'headers' and 'body'", () => {
       const incomingMessage = new IncomingMessage();
       incomingMessage.headers = {

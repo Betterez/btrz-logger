@@ -1,3 +1,4 @@
+const {ObjectID} = require("bson");
 const {expect} = require("chai");
 const Chance = require("chance");
 const chance = new Chance();
@@ -89,6 +90,14 @@ describe("ConsoleLogger", () => {
     it("should correctly serialize the number 0", () => {
       logger.info("Some message", 0);
       expectStringWasLogged("0");
+    });
+
+    it("should correctly serialize a Mongo ObjectID", () => {
+      logger.info("Some message", {_id: new ObjectID("6734ee02914f80d97e99586d")});
+      expectStringWasLogged("\n" +
+        "{\n" +
+        "  _id: new ObjectId(6734ee02914f80d97e99586d)\n" +
+        "}");
     });
 
     it("should correctly serialize 'null'", () => {

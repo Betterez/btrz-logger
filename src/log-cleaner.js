@@ -93,6 +93,8 @@ function _sanitize(value, currentDepth , startTime) {
     return {sanitizedValue: _sanitizeAxiosError(value, startTime)};
   } else if (value instanceof Error) {
     return {sanitizedValue: value};
+  } else if (value instanceof Date) {
+    return {sanitizedValue: value};
   } else if (value instanceof IncomingMessage) {
     return _sanitize({headers: value.headers, body: value.body}, currentDepth + 1, startTime);
   } else if (typeof value === "object") {

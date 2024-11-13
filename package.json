@@ -38,6 +38,7 @@
     "lodash": "^4.17.21",
     "mocha": "10.4.0",
     "sinon": "^19.0.2",
-    "sinon-chai": "^3.7.0"
+    "sinon-chai": "^3.7.0",
+    "mongodb": "3.6.12"
   }
 }
