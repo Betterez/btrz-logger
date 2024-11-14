@@ -1,5 +1,6 @@
 const util = require("node:util");
 const {IncomingMessage} = require("node:http");
+const {ObjectId} = require("bson");
 
 const MAX_DEPTH = 15;
 const MAX_LOG_BODY_LENGTH = 4096;
@@ -77,12 +78,12 @@ function _sanitize(value, currentDepth , startTime) {
     return {sanitizedValue: value};
   } else if (typeof value === "string") {
     return {sanitizedValue: _sanitizeString(value)};
-  } else if (Array.isArray(value)) {
-    const sanitizedValue = [];
+  } else if (Array.isArray(value) || value instanceof Set) {
+    const sanitizedValue = Array.isArray(value) ? [] : new Set();
 
     for (const arrayItem of value) {
-      const {sanitizedValue: sanitizedArrayItem, outOfTime} = _sanitize(arrayItem, currentDepth + 1, startTime);
-      sanitizedValue.push(sanitizedArrayItem);
+      const {sanitizedValue: sanitizedItem, outOfTime} = _sanitize(arrayItem, currentDepth + 1, startTime);
+      Array.isArray(value) ? sanitizedValue.push(sanitizedItem) : sanitizedValue.add(sanitizedItem);
       if (outOfTime) {
         return {sanitizedValue, outOfTime};
       }
@@ -97,9 +98,15 @@ function _sanitize(value, currentDepth , startTime) {
     return {sanitizedValue: value};
   } else if (value instanceof IncomingMessage) {
     return _sanitize({headers: value.headers, body: value.body}, currentDepth + 1, startTime);
+  } else if (value._bsontype === "ObjectID") {
+    return {sanitizedValue: new ObjectId(value)};
+  } else if (value instanceof Map) {
+    return {sanitizedValue: new Map()};
+  } else if (value instanceof Buffer) {
+    // Buffers contain arbitrary data and may include secrets
+    return {sanitizedValue: new Buffer("")};
   } else if (typeof value === "object") {
     const sanitizedObject = {};
-    Object.setPrototypeOf(sanitizedObject, Object.getPrototypeOf(value));
 
     const ownPropertyNames = Object.getOwnPropertyNames(value);
     for (const key of ownPropertyNames) {

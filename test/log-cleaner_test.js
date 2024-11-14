@@ -172,6 +172,18 @@ describe("logCleaner", (done) => {
       });
     });
 
+    it("should remove sensitive fields that are contained in sets", () => {
+      const sanitizedValue = logCleaner.sanitize(new Set([{password: "abc123"}, `"ccnumber": "3512131415161718"`]));
+      expect(sanitizedValue).to.eql(new Set([{password: "***"}, `"ccnumber": "regx.ccnumber.replaced"`]))
+    });
+
+    it("should replace a Buffer with an empty Buffer since buffers can contain arbitrary data, including secrets", () => {
+      const buffer = new Buffer("some-secret-password");
+      const sanitizedValue = logCleaner.sanitize(buffer);
+      expect(sanitizedValue).to.be.an.instanceof(Buffer);
+      expect(sanitizedValue.toString()).to.eql("");
+    });
+
     it("should recognize sensitive fields in objects when the field name contains non-alphanumeric characters", () => {
       const targetObject = {
         "__p-a=s:s_ wo+rd;": "some password"
@@ -280,6 +292,11 @@ describe("logCleaner", (done) => {
       const date = new Date();
       const sanitizedValue = logCleaner.sanitize(date);
       expect(sanitizedValue).to.equal(date);
+    });
+
+    it("should return booleans without any modifications", () => {
+      expect(logCleaner.sanitize(true)).to.eql(true);
+      expect(logCleaner.sanitize(false)).to.eql(false);
     });
 
     it("should simplify a NodeJS 'IncomingMessage' and return only its 'headers' and 'body'", () => {

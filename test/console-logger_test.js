@@ -96,8 +96,13 @@ describe("ConsoleLogger", () => {
       logger.info("Some message", {_id: new ObjectID("6734ee02914f80d97e99586d")});
       expectStringWasLogged("\n" +
         "{\n" +
-        "  _id: new ObjectId(6734ee02914f80d97e99586d)\n" +
+        "  _id: 6734ee02914f80d97e99586d\n" +
         "}");
+    });
+
+    it("should correctly serialize a Buffer as an empty Buffer", () => {
+      logger.info("Some message", new Buffer("some-secret-value-which-could-be-decoded"));
+      expectStringWasLogged("\n<Buffer >");
     });
 
     it("should correctly serialize 'null'", () => {
@@ -193,10 +198,15 @@ describe("ConsoleLogger", () => {
         "}");
     });
 
-    it("should serialize a Set as an empty Set", () => {
-      // This behaviour should be changed in the future
-      logger.info("Some message", new Set([1, 2, 3]));
-      expectStringWasLogged("\nSet {}");
+    it("should correctly serialize a Set", () => {
+      logger.info("Some message", new Set([1, 2, 3, Symbol("abc")]));
+      expectStringWasLogged("\n" +
+        "Set(4) {\n" +
+        "  1,\n" +
+        "  2,\n" +
+        "  3,\n" +
+        "  Symbol(abc)\n" +
+        "}");
     });
 
     it( "should serialize a Map as an empty Map", () => {
@@ -205,7 +215,7 @@ describe("ConsoleLogger", () => {
       map.set("someProperty", "some value");
 
       logger.info("Some message", map);
-      expectStringWasLogged("\nMap {}");
+      expectStringWasLogged("\nMap(0) {}");
     });
   });
 });
