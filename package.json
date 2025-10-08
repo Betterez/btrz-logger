@@ -29,7 +29,8 @@
   "dependencies": {
     "ansi-color": "0.2.1",
     "lodash.memoize": "4.1.2",
-    "r7insight_node": "^3.3.1"
+    "r7insight_node": "^3.3.1",
+    "rotating-file-stream": "3.2.7"
   },
   "devDependencies": {
     "axios": "^1.7.2",

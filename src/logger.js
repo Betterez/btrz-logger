@@ -1,5 +1,6 @@
+const assert = require("node:assert");
+const process = require("node:process");
 const logCleaner = require("./log-cleaner");
-const process = require("process");
 
 function isString(value) {
   return value && value.toLowerCase;
@@ -52,7 +53,7 @@ class Logger {
     }
   }
 
-  constructor(options) {
+  constructor(options = {}) {
     this.options = options;
     this.loggers = [];
     this.level = options && options.level ? options.level : "debug";
@@ -86,12 +87,11 @@ class Logger {
   }
 
   addLogger(logger) {
-    if (logger.error && logger.error.apply) {
-      this.loggers.push(logger);
-    } else {
-      let loggerOptions = this.options.loggers[logger];
-      this.loggers.push(require("./providers/" + loggerOptions.provider).create(loggerOptions.options));
-    }
+    assert(logger.error?.apply, "The provided logger does not implement the error() method.");
+
+    this.loggers.push(logger);
+    // Return 'this' for chaining
+    return this;
   }
 
   clearLoggers() {

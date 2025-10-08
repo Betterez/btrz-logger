@@ -3,6 +3,7 @@ exports.Logger = require("./src/logger").Logger;
 exports.LoggerForTests = require("./src/logger-for-tests").LoggerForTests;
 exports.ConsoleLogger = require("./src/console-logger").ConsoleLogger;
 exports.LogEntriesLogger = require("./src/log-entries-logger").LogEntriesLogger;
+exports.RotatingFileLogger = require("./src/rotating-file-logger").RotatingFileLogger;
 exports.SilentLogger = require("./src/silent-logger").SilentLogger;
 exports.expressMiddleware = require("./src/express-middleware").expressMiddleware;
 exports.constants = require("./constants");
