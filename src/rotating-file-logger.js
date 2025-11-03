@@ -46,6 +46,8 @@ function removeOldLogFiles(logDirectory, logName) {
 
 
 class RotatingFileLogger {
+  static _fileStreams = new Map();
+
   constructor(options = {}) {
     const {logName, logDirectory, sanitize, addNewlines = true, colorize = true} = options;
 
@@ -56,6 +58,17 @@ class RotatingFileLogger {
     this.addNewlines = addNewlines;
     this.sanitize = sanitize;
     this.colorize = colorize;
+
+    const logStreamKey = JSON.stringify({logName, logDirectory});
+
+    // We can't anticipate how developers will use this logger.  They may create hundreds of instances of this class.
+    // If this happens, we want to ensure that we don't open hundreds of streams to the same log file, which would risk
+    // exhausting the file system's limit on open files.  To avoid this, we keep a cache of streams that we've
+    // created, and re-use them when the user is logging to the same log file that a previous stream points to.
+    if (RotatingFileLogger._fileStreams.has(logStreamKey)) {
+      this._stream = RotatingFileLogger._fileStreams.get(logStreamKey);
+      return;
+    }
 
     if (cluster.isMaster) {
       removeOldLogFiles(logDirectory, logName);
@@ -79,7 +92,7 @@ class RotatingFileLogger {
       return `${dateBucket}_${index}-${logName}.log`;
     };
 
-    this.stream = RotatingFileStream.createStream(logFileNameProvider, {
+    this._stream = RotatingFileStream.createStream(logFileNameProvider, {
       size: "300M",
       maxSize: "1G",
       maxFiles: MAX_HOURS_TO_KEEP_LOG_FILES,
@@ -88,10 +101,16 @@ class RotatingFileLogger {
       immutable: true,
       history: `${logName}-log-file-history.txt`
     });
+
+    RotatingFileLogger._fileStreams.set(logStreamKey, this._stream);
+
+    this._stream.on("close", () => {
+      RotatingFileLogger._fileStreams.delete(logStreamKey);
+    });
   }
 
   log(tokens) {
-    this.stream.write(`${format(tokens, this.colorize)}${this.addNewlines ? "\n" : ""}`);
+    this._stream.write(`${format(tokens, this.colorize)}${this.addNewlines ? "\n" : ""}`);
   }
 
   // Used for Express logger
@@ -101,7 +120,7 @@ class RotatingFileLogger {
     if (this.sanitize) {
       valueToWrite = logCleaner.sanitizeUrlRawParameters(stringValue);
     }
-    this.stream.write(`${valueToWrite}${this.addNewlines ? "\n" : ""}`);
+    this._stream.write(`${valueToWrite}${this.addNewlines ? "\n" : ""}`);
   }
 }
 
