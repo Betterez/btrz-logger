@@ -1,6 +1,7 @@
 const assert = require("node:assert");
 const process = require("node:process");
 const logCleaner = require("./log-cleaner");
+const {trace: otlpTrace} = require("@opentelemetry/api");
 
 function isString(value) {
   return value && value.toLowerCase;
@@ -12,7 +13,7 @@ function getStackTrace () {
   return stack.splice(stack[0] == 'Error' ? 2 : 1);
 }
 
-function buildMessage(level, msg, data, options, location) {
+function buildMessage(level, msg, data, options) {
   let _msg = msg,
     _data = data;
 
@@ -33,10 +34,11 @@ function buildMessage(level, msg, data, options, location) {
 
   const tokens = {
     date: new Date().toISOString(),
-    level: level,
+    level,
     message: logCleaner.sanitizeUrlRawParameters(_msg),
-    serverId: options && options.serverId ? `${options.serverId}#${process.pid}` : "",
-    traceId: options && options.traceId ? options.traceId : "",
+    serverId: options.serverId ? `${options.serverId}#${process.pid}` : "",
+    traceId: options.traceId || "",
+    grafanaTraceId: otlpTrace.getActiveSpan()?.spanContext().traceId || "",
     data: logCleaner.sanitize(_data),
     location: getStackTrace()
   };

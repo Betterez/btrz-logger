@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/Betterez/btrz-logger#readme",
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "ansi-color": "0.2.1",
     "lodash.memoize": "4.1.2",
     "r7insight_node": "^3.3.1",

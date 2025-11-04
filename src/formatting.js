@@ -28,19 +28,20 @@ function serialize(value) {
 }
 
 function format(tokens, colorize) {
-  let message = `${tokens.level.toUpperCase()}\t${tokens.date} \t${tokens.serverId}\t${tokens.traceId}`;
+  const logLevel = tokens.level.toUpperCase().padEnd(5, " ");
+  const date = tokens.date;
+  const serverId = tokens.serverId?.padEnd(15, " ") || "-";
+  const amznTraceId = tokens.traceId || "-";
+  const grafanaTraceId = tokens.grafanaTraceId || "-";
+  const message = tokens.message ? ` ${tokens.message}` : "";
+  const data = (tokens.data !== undefined && tokens.data !== "") ? ` ${serialize(tokens.data)}` : "";
 
-  if (tokens.message) {
-    message += `\t${tokens.message}`;
-  }
-  if (tokens.data !== undefined && tokens.data !== "") {
-    message += `\t${serialize(tokens.data)}`;
-  }
+  const output = `${logLevel} ${date} ${serverId} ${amznTraceId} ${grafanaTraceId}${message}${data}`;
 
   if (colorize) {
-    return color(message, colorByLogLevel[tokens.level.toLowerCase()]);
+    return color(output, colorByLogLevel[tokens.level.toLowerCase()]);
   } else {
-    return message;
+    return output;
   }
 }
 

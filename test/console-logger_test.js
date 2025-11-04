@@ -6,10 +6,12 @@ const util = require("node:util");
 const {IncomingMessage} = require("node:http");
 const sinon = require("sinon");
 const {Logger, ConsoleLogger} = require("../index");
+const {trace: otlpTrace} = require("@opentelemetry/api");
 
 describe("ConsoleLogger", () => {
   let serverId;
   let traceId;
+  let grafanaTraceId;
   let consoleLogger;
   let logger;
   let clock;
@@ -22,13 +24,22 @@ describe("ConsoleLogger", () => {
     consoleLogger = new ConsoleLogger({colorize: false});
     sinon.spy(console, "log");
 
+    grafanaTraceId = `grafana-trace-${chance.hash({length: 4})}`;
+    sinon.stub(otlpTrace, "getActiveSpan").returns({
+      spanContext() {
+        return {
+          traceId: grafanaTraceId
+        };
+      }
+    });
+
     logger = new Logger({serverId, traceId});
     logger.addLogger(consoleLogger);
 
     currentDate = new Date();
     clock = sinon.useFakeTimers(currentDate);
 
-    logPrefix = `INFO\t${currentDate.toISOString()} \t${serverId}#${process.pid}\t${traceId}`;
+    logPrefix = `INFO  ${currentDate.toISOString()} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`;
   });
 
   afterEach(() => {
@@ -38,17 +49,17 @@ describe("ConsoleLogger", () => {
 
   it("should output a string containing the log level, current date, server ID, process ID, and trace ID", () => {
     logger.info("");
-    expect(console.log).to.have.been.calledOnceWith(`INFO\t${currentDate.toISOString()} \t${serverId}#${process.pid}\t${traceId}`);
+    expect(console.log).to.have.been.calledOnceWith(`INFO  ${currentDate.toISOString()} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should output the message that was logged", () => {
     logger.info("Some message");
-    expect(console.log).to.have.been.calledOnceWith(`${logPrefix}\tSome message`);
+    expect(console.log).to.have.been.calledOnceWith(`${logPrefix} Some message`);
   });
 
   it("should serialize and output an object when one is logged", () => {
     logger.info({someProperty: "some value"});
-    expect(console.log).to.have.been.calledOnceWith(`${logPrefix}\t\n{\n  someProperty: 'some value'\n}`);
+    expect(console.log).to.have.been.calledOnceWith(`${logPrefix} \n{\n  someProperty: 'some value'\n}`);
   });
 
   it("should output a message with the correct severity", () => {
@@ -70,11 +81,11 @@ describe("ConsoleLogger", () => {
 
   describe("data serialization", () => {
     beforeEach(() => {
-      logPrefix = `INFO\t${currentDate.toISOString()} \t${serverId}#${process.pid}\t${traceId}\tSome message`;
+      logPrefix = `INFO  ${currentDate.toISOString()} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId} Some message`;
     });
 
     function expectStringWasLogged(string) {
-      expect(console.log).to.have.been.calledOnceWith(`${logPrefix}\t${string}`);
+      expect(console.log).to.have.been.calledOnceWith(`${logPrefix} ${string}`);
     }
 
     it("should correctly serialize a string by returning the unmodified string", () => {
