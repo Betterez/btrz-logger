@@ -7,7 +7,7 @@ class ConsoleLogger {
   }
 
   log(tokens) {
-    console.log(format(tokens, this.colorize));
+    console.log(format(tokens, {colorize: this.colorize}));
   }
 
   // Used for Express logger

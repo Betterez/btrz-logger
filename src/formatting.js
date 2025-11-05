@@ -27,7 +27,7 @@ function serialize(value) {
   }
 }
 
-function format(tokens, colorize) {
+function format(tokens, options = {}) {
   const logLevel = tokens.level.toUpperCase().padEnd(5, " ");
   const date = tokens.date;
   const serverId = tokens.serverId?.padEnd(15, " ") || "-";
@@ -38,8 +38,10 @@ function format(tokens, colorize) {
 
   const output = `${logLevel} ${date} ${serverId} ${amznTraceId} ${grafanaTraceId}${message}${data}`;
 
-  if (colorize) {
-    return color(output, colorByLogLevel[tokens.level.toLowerCase()]);
+  if (options.colorize) {
+    const lowerCaseLogLevel = tokens.level.toLowerCase();
+    const colorToApply = options.colors?.[lowerCaseLogLevel] || colorByLogLevel[lowerCaseLogLevel];
+    return color(output, colorToApply);
   } else {
     return output;
   }

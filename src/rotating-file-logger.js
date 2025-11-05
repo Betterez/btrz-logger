@@ -57,7 +57,12 @@ class RotatingFileLogger {
 
     this.addNewlines = addNewlines;
     this.sanitize = sanitize;
-    this.colorize = colorize;
+    this.formatOptions = {
+      colorize,
+      colors: {
+        debug: "cyan" // This color looks better than "blue" when viewed in the Grafana UI
+      }
+    };
 
     const logStreamKey = JSON.stringify({logName, logDirectory});
 
@@ -110,7 +115,7 @@ class RotatingFileLogger {
   }
 
   log(tokens) {
-    this._stream.write(`${format(tokens, this.colorize)}${this.addNewlines ? "\n" : ""}`);
+    this._stream.write(`${format(tokens, this.formatOptions)}${this.addNewlines ? "\n" : ""}`);
   }
 
   // Used for Express logger
