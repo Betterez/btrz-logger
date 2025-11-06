@@ -36,8 +36,9 @@ function stringifyTokens(tokens) {
   const stringifyTokens = {
     date: `${tokens.date}`,
     message: `${tokens.message}`,
-    serverId: `${tokens.serverId}`,
-    traceId: `${tokens.traceId}`,
+    server_id: `${tokens.serverId}` || "-",
+    amzn_trace_id: `${tokens.traceId}` || "-",
+    grafana_trace_id: `${tokens.grafanaTraceId}` || "-",
     data: tokens.data
   };
 
