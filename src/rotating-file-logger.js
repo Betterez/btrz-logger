@@ -6,7 +6,7 @@ const RotatingFileStream = require("rotating-file-stream");
 const {format} = require("./console-logger");
 const logCleaner = require("./log-cleaner");
 
-const MAX_HOURS_TO_KEEP_LOG_FILES = 24;
+const MAX_HOURS_TO_KEEP_LOG_FILES = 4;
 const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 
 function removeOldLogFiles(logDirectory, logName) {
