@@ -1,26 +1,50 @@
 describe("LoggerFactory", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
   const {expect} = require("chai");
   const Chance = require("chance");
   const chance = new Chance();
-  const {ALL_OUTPUT_DESTINATIONS, CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, SILENT_OUTPUT, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE,
-    LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY} = require("../constants");
+  const {
+    ALL_OUTPUT_DESTINATIONS, CONSOLE_OUTPUT, LOGENTRIES_OUTPUT, ROTATING_FILE_OUTPUT, SILENT_OUTPUT,
+    LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL,
+    LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY
+  } = require("../constants");
   const {ConsoleLogger} = require("../src/console-logger");
   const {LogEntriesLogger} = require("../src/log-entries-logger");
+  const {RotatingFileLogger} = require("../src/rotating-file-logger");
   const {SilentLogger} = require("../src/silent-logger");
   const {Logger} = require("../src/logger");
   const {LoggerForTests} = require("../src/logger-for-tests");
   const {LoggerFactory} = require("../src/logger-factory");
 
+  const logDirectory = path.join(__dirname, `../logs-${chance.hash()}`);
+
   let serverId = null;
   let traceId = null;
   let logEntriesToken = null;
+  let logName = null;
+  let sanitize = null;
+  let addNewlines = null;
+  let colorize = null;
   let outputDestinations = null;
+
+  before(() => {
+    fs.rmSync(logDirectory, {recursive: true, force: true});
+  });
 
   beforeEach(() => {
     serverId = chance.hash();
     traceId = chance.hash();
     logEntriesToken = chance.guid();
+    logName = `logs-${chance.word()}`;
+    sanitize = chance.bool();
+    addNewlines = chance.bool();
+    colorize = chance.bool();
     outputDestinations = ALL_OUTPUT_DESTINATIONS;
+  });
+
+  after(() => {
+    fs.rmSync(logDirectory, {recursive: true, force: true});
   });
 
   describe("constructor", () => {
@@ -28,13 +52,23 @@ describe("LoggerFactory", () => {
       const loggerFactory = new LoggerFactory({
         serverId,
         logEntriesToken,
-        outputDestinations
+        outputDestinations,
+        logName,
+        logDirectory,
+        sanitize,
+        addNewlines,
+        colorize
       });
 
       expect(loggerFactory.serverId).to.eql(serverId);
       expect(loggerFactory.logEntriesToken).to.eql(logEntriesToken);
       expect(loggerFactory.outputDestinations).to.deep.eql(outputDestinations);
-    })
+      expect(loggerFactory.logName).to.deep.eql(logName);
+      expect(loggerFactory.logDirectory).to.deep.eql(logDirectory);
+      expect(loggerFactory.sanitize).to.deep.eql(sanitize);
+      expect(loggerFactory.addNewlines).to.deep.eql(addNewlines);
+      expect(loggerFactory.colorize).to.deep.eql(colorize);
+    });
   });
 
   describe(".create()", () => {
@@ -44,7 +78,7 @@ describe("LoggerFactory", () => {
     beforeEach(() => {
       level = chance.pickone([LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR,
         LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY]);
-      loggerFactory = new LoggerFactory({serverId, logEntriesToken, outputDestinations, level});
+      loggerFactory = new LoggerFactory({serverId, logEntriesToken, outputDestinations, level, logName, logDirectory, sanitize, addNewlines, colorize});
     });
 
 
@@ -61,6 +95,9 @@ describe("LoggerFactory", () => {
             break;
           case LOGENTRIES_OUTPUT:
             expect(outputAdapter).to.be.an.instanceOf(LogEntriesLogger);
+            break;
+          case ROTATING_FILE_OUTPUT:
+            expect(outputAdapter).to.be.an.instanceOf(RotatingFileLogger);
             break;
           case SILENT_OUTPUT:
             expect(outputAdapter).to.be.an.instanceOf(SilentLogger);
@@ -134,6 +171,21 @@ describe("LoggerFactory", () => {
       const logger = loggerFactory.create({});
       expect(logger).to.be.an.instanceOf(LoggerForTests);
       expect(logger.constructor.name).to.eql("LoggerForTests");
+    });
+
+    it("should throw an error if one of the output destinations is a rotating file, and no 'logName' was provided", () => {
+      loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT, ROTATING_FILE_OUTPUT]});
+      expect(() => loggerFactory.create({logDirectory, sanitize})).to.throw("the 'logName' option is required when logging to a file");
+    });
+
+    it("should throw an error if one of the output destinations is a rotating file, and no 'logDirectory' was provided", () => {
+      loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT, ROTATING_FILE_OUTPUT]});
+      expect(() => loggerFactory.create({logName, sanitize})).to.throw("the 'logDirectory' option is required when logging to a file");
+    });
+
+    it("should throw an error if one of the output destinations is a rotating file, and no 'sanitize' option was provided", () => {
+      loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT, ROTATING_FILE_OUTPUT]});
+      expect(() => loggerFactory.create({logName, logDirectory})).to.throw("the 'sanitize' option is required when logging to a file");
     });
 
     it("should allow options to be omitted", () => {
