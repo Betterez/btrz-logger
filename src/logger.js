@@ -13,6 +13,28 @@ function getStackTrace () {
   return stack.splice(stack[0] == 'Error' ? 2 : 1);
 }
 
+let _dateOfPreviousLogLine = null;
+let _numberOfOtherLogsUsingThisDate = 0;
+
+/* Some logging systems will de-duplicate log lines which have exactly the same content and timestamp (date).
+ * We don't want any of our logs to be de-duplicated, because we would effectively lose those logs.  To prevent
+ * de-duplication, when there are multiple log lines emitted within the same millisecond window, we add a fake number
+ * of nanoseconds to the timestamp of each log line.  This ensures that each log line has a unique timestamp,
+ * preventing de-duplication.
+ */
+function getUniqueDate() {
+  const date = new Date().toISOString();
+
+  if (_dateOfPreviousLogLine === date) {
+    _numberOfOtherLogsUsingThisDate++;
+  } else {
+    _numberOfOtherLogsUsingThisDate = 0;
+  }
+
+  _dateOfPreviousLogLine = date;
+  return `${date.slice(0, -1)}${_numberOfOtherLogsUsingThisDate.toString().padStart(6, "0")}Z`;
+}
+
 function buildMessage(level, msg, data, options) {
   let _msg = msg,
     _data = data;
@@ -33,7 +55,7 @@ function buildMessage(level, msg, data, options) {
   }
 
   const tokens = {
-    date: new Date().toISOString(),
+    date: getUniqueDate(),
     level,
     message: logCleaner.sanitizeUrlRawParameters(_msg),
     serverId: options.serverId ? `${options.serverId}#${process.pid}` : "",

@@ -11,7 +11,7 @@ describe("Logger", () => {
   let mockLogger;
   let logger;
   let clock;
-  let currentDate;
+  let currentDate = new Date();
 
   beforeEach(() => {
     mockLogger = {
@@ -23,7 +23,8 @@ describe("Logger", () => {
     logger = new Logger();
     logger.addLogger(mockLogger);
 
-    currentDate = new Date();
+    // Add 1 millisecond to the current date to ensure that each test run uses a unique timestamp
+    currentDate = new Date(currentDate.valueOf() + 1);
     clock = sinon.useFakeTimers(currentDate);
   });
 
@@ -92,9 +93,22 @@ describe("Logger", () => {
     expect(mockLogger.log).to.have.been.calledWithMatch({level: "fatal"});
   });
 
-  it("should create a log entry with the current date", () => {
+  it("should create a log entry with the current date in nanosecond precision", () => {
     logger.info("Some message");
-    expect(mockLogger.log).to.have.been.calledWithMatch({date: currentDate.toISOString()});
+    expect(mockLogger.log).to.have.been.calledWithMatch({
+      date: `${currentDate.toISOString().slice(0, -1)}000000Z`
+    });
+  });
+
+  it("should ensure that every log entry has a unique date, particularly when the logger is rapidly called many times in a row", () => {
+    // Unique timestamps are necessary so that logging infrastructure does not de-duplicate log entries.
+    logger.info("Some message");
+    logger.info("Some message");
+    logger.info("Some message");
+
+    expect(mockLogger.log.args[0][0].date).to.eql(`${currentDate.toISOString().slice(0, -1)}000000Z`);
+    expect(mockLogger.log.args[1][0].date).to.eql(`${currentDate.toISOString().slice(0, -1)}000001Z`);
+    expect(mockLogger.log.args[2][0].date).to.eql(`${currentDate.toISOString().slice(0, -1)}000002Z`);
   });
 
   describe("data logging", () => {

@@ -15,7 +15,8 @@ describe("ConsoleLogger", () => {
   let consoleLogger;
   let logger;
   let clock;
-  let currentDate;
+  let currentDate = new Date();
+  let timestamp;
   let logPrefix;
 
   beforeEach(() => {
@@ -36,10 +37,12 @@ describe("ConsoleLogger", () => {
     logger = new Logger({serverId, traceId});
     logger.addLogger(consoleLogger);
 
-    currentDate = new Date();
+    // Add 1 millisecond to the current date to ensure that each test run uses a unique timestamp
+    currentDate = new Date(currentDate.valueOf() + 1);
+    timestamp = `${currentDate.toISOString().slice(0, -1)}000000Z`;
     clock = sinon.useFakeTimers(currentDate);
 
-    logPrefix = `INFO  ${currentDate.toISOString()} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`;
+    logPrefix = `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`;
   });
 
   afterEach(() => {
@@ -47,9 +50,9 @@ describe("ConsoleLogger", () => {
     sinon.restore();
   });
 
-  it("should output a string containing the log level, current date, server ID, process ID, and trace ID", () => {
+  it("should output a string containing the log level, timestamp, server ID, process ID, and trace ID", () => {
     logger.info("");
-    expect(console.log).to.have.been.calledOnceWith(`INFO  ${currentDate.toISOString()} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
+    expect(console.log).to.have.been.calledOnceWith(`INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should output the message that was logged", () => {
@@ -81,7 +84,7 @@ describe("ConsoleLogger", () => {
 
   describe("data serialization", () => {
     beforeEach(() => {
-      logPrefix = `INFO  ${currentDate.toISOString()} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId} Some message`;
+      logPrefix = `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId} Some message`;
     });
 
     function expectStringWasLogged(string) {
