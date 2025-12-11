@@ -58,7 +58,7 @@ function buildMessage(level, msg, data, options) {
     date: getUniqueDate(),
     level,
     message: logCleaner.sanitizeUrlRawParameters(_msg),
-    serverId: options.serverId ? `${options.serverId}#${process.pid}` : "",
+    serverId: options.serverId ? `${options.serverId}#${process.pid}` : `localhost#${process.pid}`,
     traceId: options.traceId || "",
     grafanaTraceId: otlpTrace.getActiveSpan()?.spanContext().traceId || "",
     data: logCleaner.sanitize(_data),
