@@ -63,6 +63,14 @@ describe("ConsoleLogger", () => {
     expect(console.log).to.have.been.calledOnceWith(`INFO  ${timestamp} localhost#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
+  it("should default the trace ID to '-' if no traceId is provided", () => {
+    logger = new Logger({serverId});
+    logger.addLogger(consoleLogger);
+
+    logger.info("");
+    expect(console.log).to.have.been.calledOnceWith(`INFO  ${timestamp} ${serverId}#${process.pid} - ${grafanaTraceId}`);
+  });
+
   it("should output the message that was logged", () => {
     logger.info("Some message");
     expect(console.log).to.have.been.calledOnceWith(`${logPrefix} Some message`);

@@ -59,7 +59,7 @@ function buildMessage(level, msg, data, options) {
     level,
     message: logCleaner.sanitizeUrlRawParameters(_msg),
     serverId: options.serverId ? `${options.serverId}#${process.pid}` : `localhost#${process.pid}`,
-    traceId: options.traceId || "",
+    traceId: options.traceId || "-",
     grafanaTraceId: otlpTrace.getActiveSpan()?.spanContext().traceId || "",
     data: logCleaner.sanitize(_data),
     location: getStackTrace()
