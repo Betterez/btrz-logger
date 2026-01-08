@@ -75,7 +75,7 @@ class RotatingFileLogger {
       return;
     }
 
-    if (cluster.isMaster) {
+    if (cluster.isPrimary || (!cluster.isPrimary && cluster.isMaster)) {
       removeOldLogFiles(logDirectory, logName);
     }
 

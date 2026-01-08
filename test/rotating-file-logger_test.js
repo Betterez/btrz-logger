@@ -47,7 +47,7 @@ describe("RotatingFileLogger", () => {
     const uniqueStreams = new Set(allStreams);
 
     await Promise.all(
-      uniqueStreams.values().map((stream) => {
+      Array.from(uniqueStreams.values()).map((stream) => {
         return new Promise((resolve) => {
           if (stream.closed) {
             return resolve();
