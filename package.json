@@ -7,8 +7,8 @@
     "preversion": "npm test",
     "postversion": "git push origin master && git push --tags",
     "version": "git tag $1",
-    "test": "mocha --exit",
-    "test-w": "mocha -w --exit"
+    "test": "node --test --test-force-exit test/*.js",
+    "test-w": "node --test --test-force-exit --watch test/*.js"
   },
   "repository": {
     "type": "git",
@@ -27,20 +27,15 @@
   },
   "homepage": "https://github.com/Betterez/btrz-logger#readme",
   "dependencies": {
-    "@opentelemetry/api": "^1.9.0",
-    "ansi-color": "0.2.1",
+    "@opentelemetry/api": "1.9.1",
+    "ansi-color": "0.2.2",
+    "bson": "1.1.6",
     "lodash.memoize": "4.1.2",
-    "r7insight_node": "^3.3.1",
-    "rotating-file-stream": "3.2.7"
+    "r7insight_node": "3.3.1",
+    "rotating-file-stream": "3.2.9"
   },
   "devDependencies": {
-    "axios": "^1.7.2",
-    "bson": "1.1.6",
-    "chai": "4.3.4",
-    "chance": "^1.1.12",
-    "lodash": "^4.17.21",
-    "mocha": "10.4.0",
-    "sinon": "^19.0.2",
-    "sinon-chai": "^3.7.0"
+    "chance": "1.1.13",
+    "sinon": "21.1.2"
   }
 }

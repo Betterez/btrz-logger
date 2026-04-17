@@ -1,3 +1,5 @@
+const {describe, it, beforeEach} = require("node:test");
+
 describe("console", function () {
   let logger = null;
   beforeEach(function () {

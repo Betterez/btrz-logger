@@ -1,5 +1,6 @@
+const assert = require("node:assert/strict");
+const {describe, it, beforeEach, afterEach} = require("node:test");
 const {ObjectID} = require("bson");
-const {expect} = require("chai");
 const Chance = require("chance");
 const chance = new Chance();
 const util = require("node:util");
@@ -52,7 +53,8 @@ describe("ConsoleLogger", () => {
 
   it("should output a string containing the log level, timestamp, server ID, process ID, and trace ID", () => {
     logger.info("");
-    expect(console.log).to.have.been.calledOnceWith(`INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
+    sinon.assert.calledOnce(console.log);
+    sinon.assert.calledWithExactly(console.log, `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should default the server ID to 'localhost' if no serverId is provided", () => {
@@ -60,7 +62,8 @@ describe("ConsoleLogger", () => {
     logger.addLogger(consoleLogger);
 
     logger.info("");
-    expect(console.log).to.have.been.calledOnceWith(`INFO  ${timestamp} localhost#${process.pid} ${traceId} ${grafanaTraceId}`);
+    sinon.assert.calledOnce(console.log);
+    sinon.assert.calledWithExactly(console.log, `INFO  ${timestamp} localhost#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should default the trace ID to '-' if no traceId is provided", () => {
@@ -68,34 +71,37 @@ describe("ConsoleLogger", () => {
     logger.addLogger(consoleLogger);
 
     logger.info("");
-    expect(console.log).to.have.been.calledOnceWith(`INFO  ${timestamp} ${serverId}#${process.pid} - ${grafanaTraceId}`);
+    sinon.assert.calledOnce(console.log);
+    sinon.assert.calledWithExactly(console.log, `INFO  ${timestamp} ${serverId}#${process.pid} - ${grafanaTraceId}`);
   });
 
   it("should output the message that was logged", () => {
     logger.info("Some message");
-    expect(console.log).to.have.been.calledOnceWith(`${logPrefix} Some message`);
+    sinon.assert.calledOnce(console.log);
+    sinon.assert.calledWithExactly(console.log, `${logPrefix} Some message`);
   });
 
   it("should serialize and output an object when one is logged", () => {
     logger.info({someProperty: "some value"});
-    expect(console.log).to.have.been.calledOnceWith(`${logPrefix} \n{\n  someProperty: 'some value'\n}`);
+    sinon.assert.calledOnce(console.log);
+    sinon.assert.calledWithExactly(console.log, `${logPrefix} \n{\n  someProperty: 'some value'\n}`);
   });
 
   it("should output a message with the correct severity", () => {
     logger.debug("Some message");
-    expect(console.log.args[0][0]).to.contain("DEBUG")
+    assert.match(console.log.args[0][0], /DEBUG/);
 
     sinon.reset();
     logger.info("Some message");
-    expect(console.log.args[0][0]).to.contain("INFO")
+    assert.match(console.log.args[0][0], /INFO/);
 
     sinon.reset();
     logger.error("Some message");
-    expect(console.log.args[0][0]).to.contain("ERROR")
+    assert.match(console.log.args[0][0], /ERROR/);
 
     sinon.reset();
     logger.fatal("Some message");
-    expect(console.log.args[0][0]).to.contain("FATAL")
+    assert.match(console.log.args[0][0], /FATAL/);
   });
 
   describe("data serialization", () => {
@@ -104,7 +110,8 @@ describe("ConsoleLogger", () => {
     });
 
     function expectStringWasLogged(string) {
-      expect(console.log).to.have.been.calledOnceWith(`${logPrefix} ${string}`);
+      sinon.assert.calledOnce(console.log);
+      sinon.assert.calledWithExactly(console.log, `${logPrefix} ${string}`);
     }
 
     it("should correctly serialize a string by returning the unmodified string", () => {
@@ -142,7 +149,8 @@ describe("ConsoleLogger", () => {
 
     it("should not serialize the value 'undefined'", () => {
       logger.info("Some message", undefined);
-      expect(console.log).to.have.been.calledOnceWith(logPrefix);
+      sinon.assert.calledOnce(console.log);
+      sinon.assert.calledWithExactly(console.log, logPrefix);
     });
 
     it("should correctly serialize an error", () => {

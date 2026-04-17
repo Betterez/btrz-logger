@@ -1,7 +1,9 @@
+const assert = require("node:assert/strict");
+const {describe, it, before, beforeEach, after} = require("node:test");
+
 describe("LoggerFactory", () => {
   const fs = require("node:fs");
   const path = require("node:path");
-  const {expect} = require("chai");
   const Chance = require("chance");
   const chance = new Chance();
   const {
@@ -60,14 +62,14 @@ describe("LoggerFactory", () => {
         colorize
       });
 
-      expect(loggerFactory.serverId).to.eql(serverId);
-      expect(loggerFactory.logEntriesToken).to.eql(logEntriesToken);
-      expect(loggerFactory.outputDestinations).to.deep.eql(outputDestinations);
-      expect(loggerFactory.logName).to.deep.eql(logName);
-      expect(loggerFactory.logDirectory).to.deep.eql(logDirectory);
-      expect(loggerFactory.sanitize).to.deep.eql(sanitize);
-      expect(loggerFactory.addNewlines).to.deep.eql(addNewlines);
-      expect(loggerFactory.colorize).to.deep.eql(colorize);
+      assert.strictEqual(loggerFactory.serverId, serverId);
+      assert.strictEqual(loggerFactory.logEntriesToken, logEntriesToken);
+      assert.deepStrictEqual(loggerFactory.outputDestinations, outputDestinations);
+      assert.deepStrictEqual(loggerFactory.logName, logName);
+      assert.deepStrictEqual(loggerFactory.logDirectory, logDirectory);
+      assert.deepStrictEqual(loggerFactory.sanitize, sanitize);
+      assert.deepStrictEqual(loggerFactory.addNewlines, addNewlines);
+      assert.deepStrictEqual(loggerFactory.colorize, colorize);
     });
   });
 
@@ -83,7 +85,7 @@ describe("LoggerFactory", () => {
 
 
     function expectLoggerLogsToAllOutputDestinations(logger, _outputDestinations) {
-      expect(_outputDestinations.length).to.be.gt(0);
+      assert.ok(_outputDestinations.length > 0);
 
       for (let i = 0; i < logger.loggers.length; i++) {
         const outputAdapter = logger.loggers[i];
@@ -91,16 +93,16 @@ describe("LoggerFactory", () => {
 
         switch (requestedDestination) {
           case CONSOLE_OUTPUT:
-            expect(outputAdapter).to.be.an.instanceOf(ConsoleLogger);
+            assert.ok(outputAdapter instanceof ConsoleLogger);
             break;
           case LOGENTRIES_OUTPUT:
-            expect(outputAdapter).to.be.an.instanceOf(LogEntriesLogger);
+            assert.ok(outputAdapter instanceof LogEntriesLogger);
             break;
           case ROTATING_FILE_OUTPUT:
-            expect(outputAdapter).to.be.an.instanceOf(RotatingFileLogger);
+            assert.ok(outputAdapter instanceof RotatingFileLogger);
             break;
           case SILENT_OUTPUT:
-            expect(outputAdapter).to.be.an.instanceOf(SilentLogger);
+            assert.ok(outputAdapter instanceof SilentLogger);
             break;
           default:
             throw new Error("Test failed - invalid destination");
@@ -114,7 +116,7 @@ describe("LoggerFactory", () => {
         return loggerFactory.create({outputDestinations: [], traceId});
       }
 
-      expect(sut).to.throw("an array of one or more outputDestinations is required");
+      assert.throws(sut, /an array of one or more outputDestinations is required/);
     });
 
     it("should throw an error if an invalid output destination is specified", () => {
@@ -124,7 +126,7 @@ describe("LoggerFactory", () => {
         return loggerFactory.create({outputDestinations, traceId});
       }
 
-      expect(sut).to.throw(`Invalid output destination: ${outputDestinations[0]}`);
+      assert.throws(sut, new RegExp(`Invalid output destination: ${outputDestinations[0]}`));
     });
 
     it("should return a Logger instance that logs to all of the specified output destinations", () => {
@@ -144,48 +146,49 @@ describe("LoggerFactory", () => {
 
     it("should return a Logger instance that has the correct 'serverId' and 'traceId'", () => {
       const logger = loggerFactory.create({traceId});
-      expect(logger.options).to.deep.contain({serverId, traceId});
+      assert.strictEqual(logger.options.serverId, serverId);
+      assert.strictEqual(logger.options.traceId, traceId);
     });
 
     it("should return a Logger instance that has the specified minimum log level", () => {
       level = chance.pickone([LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR,
         LOG_LEVEL_CRITICAL, LOG_LEVEL_ALERT, LOG_LEVEL_EMERGENCY]);
       const logger = loggerFactory.create({level});
-      expect(logger.level).to.eql(level);
+      assert.strictEqual(logger.level, level);
     });
 
     it("should default to using the log level that was provided to the class constructor", () => {
       const logger = loggerFactory.create({});
-      expect(logger.level).to.eql(level);
+      assert.strictEqual(logger.level, level);
     });
 
     it("should return an instance of the 'Logger' class", () => {
       loggerFactory = new LoggerFactory({outputDestinations: [CONSOLE_OUTPUT]});
       const logger = loggerFactory.create({});
-      expect(logger).to.be.an.instanceOf(Logger);
-      expect(logger.constructor.name).to.eql("Logger");
+      assert.ok(logger instanceof Logger);
+      assert.strictEqual(logger.constructor.name, "Logger");
     });
 
     it("should return an instance of 'LoggerForTests' when the 'isRunningTests' option is true", () => {
       loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT]});
       const logger = loggerFactory.create({});
-      expect(logger).to.be.an.instanceOf(LoggerForTests);
-      expect(logger.constructor.name).to.eql("LoggerForTests");
+      assert.ok(logger instanceof LoggerForTests);
+      assert.strictEqual(logger.constructor.name, "LoggerForTests");
     });
 
     it("should throw an error if one of the output destinations is a rotating file, and no 'logName' was provided", () => {
       loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT, ROTATING_FILE_OUTPUT]});
-      expect(() => loggerFactory.create({logDirectory, sanitize})).to.throw("the 'logName' option is required when logging to a file");
+      assert.throws(() => loggerFactory.create({logDirectory, sanitize}), /the 'logName' option is required when logging to a file/);
     });
 
     it("should throw an error if one of the output destinations is a rotating file, and no 'logDirectory' was provided", () => {
       loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT, ROTATING_FILE_OUTPUT]});
-      expect(() => loggerFactory.create({logName, sanitize})).to.throw("the 'logDirectory' option is required when logging to a file");
+      assert.throws(() => loggerFactory.create({logName, sanitize}), /the 'logDirectory' option is required when logging to a file/);
     });
 
     it("should throw an error if one of the output destinations is a rotating file, and no 'sanitize' option was provided", () => {
       loggerFactory = new LoggerFactory({isRunningTests: true, outputDestinations: [CONSOLE_OUTPUT, ROTATING_FILE_OUTPUT]});
-      expect(() => loggerFactory.create({logName, logDirectory})).to.throw("the 'sanitize' option is required when logging to a file");
+      assert.throws(() => loggerFactory.create({logName, logDirectory}), /the 'sanitize' option is required when logging to a file/);
     });
 
     it("should allow options to be omitted", () => {

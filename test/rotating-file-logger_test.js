@@ -1,7 +1,9 @@
+const assert = require("node:assert/strict");
+const {describe, it, beforeEach, afterEach} = require("node:test");
+
 describe("RotatingFileLogger", () => {
   const fs = require("node:fs");
   const path = require("node:path");
-  const {expect} = require("chai");
   const Chance = require("chance");
   const chance = new Chance();
   const RotatingFileStream = require("rotating-file-stream");
@@ -61,12 +63,13 @@ describe("RotatingFileLogger", () => {
   }
 
   function expectDirectoryDoesNotExist(directory) {
-    expect(fs.existsSync(directory), "Expected directory to not exist").to.be.false;
+    assert.strictEqual(fs.existsSync(directory), false, "Expected directory to not exist");
   }
 
   function expectDirectoryContainsOneOrMoreFiles(directory) {
     const logDirectoryContents = fs.readdirSync(directory);
-    expect(logDirectoryContents).to.be.an("array").that.is.not.empty;
+    assert.ok(Array.isArray(logDirectoryContents));
+    assert.notStrictEqual(logDirectoryContents.length, 0);
   }
 
   function getContentsOfAllLogFiles({logName, logDirectory}) {
@@ -93,7 +96,7 @@ describe("RotatingFileLogger", () => {
 
     const logFileNames = fs.readdirSync(logDirectory);
     for (const fileName of logFileNames) {
-      expect(fileName.endsWith(`${logName}.log`)).to.be.true;
+      assert.strictEqual(fileName.endsWith(`${logName}.log`), true);
     }
   });
 
@@ -106,7 +109,7 @@ describe("RotatingFileLogger", () => {
     await shutdownLogging();
 
     const logContents = getContentsOfAllLogFiles({logName, logDirectory});
-    expect(logContents).to.contain(logMessage);
+    assert.ok(logContents.includes(logMessage));
   });
 
   it("should write log messages to different files when multiple loggers are instantiated with different file locations", async () => {
@@ -121,10 +124,10 @@ describe("RotatingFileLogger", () => {
     const firstLogFileContents = getContentsOfAllLogFiles({logName: "first-logger", logDirectory});
     const secondLogFileContents = getContentsOfAllLogFiles({logName: "second-logger", logDirectory});
 
-    expect(firstLogFileContents).to.contain("Message from first logger");
-    expect(firstLogFileContents).not.to.contain("Message from second logger");
-    expect(secondLogFileContents).to.contain("Message from second logger");
-    expect(secondLogFileContents).not.to.contain("Message from first logger");
+    assert.ok(firstLogFileContents.includes("Message from first logger"));
+    assert.ok(!firstLogFileContents.includes("Message from second logger"));
+    assert.ok(secondLogFileContents.includes("Message from second logger"));
+    assert.ok(!secondLogFileContents.includes("Message from first logger"));
   });
 
   it("should not drop any log messages when multiple loggers are instantiated which log to the same file location", async () => {
@@ -143,7 +146,7 @@ describe("RotatingFileLogger", () => {
     const logContents = getContentsOfAllLogFiles({logName, logDirectory});
 
     for (let index = 0; index < loggers.length; index++) {
-      expect(logContents).to.contain(`Log message ${index}`);
+      assert.ok(logContents.includes(`Log message ${index}`));
     }
   });
 
@@ -151,30 +154,30 @@ describe("RotatingFileLogger", () => {
     await shutdownLogging();
 
     sinon.spy(RotatingFileStream, "createStream");
-    expect(RotatingFileStream.createStream.callCount).to.eql(0);
+    assert.strictEqual(RotatingFileStream.createStream.callCount, 0);
 
     const firstLogger = createLogger({logName, logDirectory});
-    expect(RotatingFileStream.createStream.callCount).to.eql(1);
+    assert.strictEqual(RotatingFileStream.createStream.callCount, 1);
 
     const secondLogger = createLogger({logName, logDirectory});
-    expect(RotatingFileStream.createStream.callCount).to.eql(1);
-    expect(firstLogger.loggers[0]._stream).to.eql(secondLogger.loggers[0]._stream);
+    assert.strictEqual(RotatingFileStream.createStream.callCount, 1);
+    assert.strictEqual(firstLogger.loggers[0]._stream, secondLogger.loggers[0]._stream);
   });
 
   it("should recreate the file stream when the logger's underlying file stream is closed, then a new logger instance is created", async () => {
     await shutdownLogging();
 
     sinon.spy(RotatingFileStream, "createStream");
-    expect(RotatingFileStream.createStream.callCount).to.eql(0);
+    assert.strictEqual(RotatingFileStream.createStream.callCount, 0);
 
     const firstLogger = createLogger({logName, logDirectory});
-    expect(RotatingFileStream.createStream.callCount).to.eql(1);
+    assert.strictEqual(RotatingFileStream.createStream.callCount, 1);
 
     await shutdownLogging();
 
     const secondLogger = createLogger({logName, logDirectory});
-    expect(RotatingFileStream.createStream.callCount).to.eql(2);
-    expect(firstLogger.loggers[0]._stream).not.to.eql(secondLogger.loggers[0]._stream);
+    assert.strictEqual(RotatingFileStream.createStream.callCount, 2);
+    assert.notStrictEqual(firstLogger.loggers[0]._stream, secondLogger.loggers[0]._stream);
   });
 
   it("should continue writing log messages after the logger's underlying file stream is closed, then a new logger instance is created", async () => {
@@ -184,7 +187,7 @@ describe("RotatingFileLogger", () => {
     await shutdownLogging();
 
     let logContents = getContentsOfAllLogFiles({logName, logDirectory});
-    expect(logContents).to.contain("Message from first logger");
+    assert.ok(logContents.includes("Message from first logger"));
 
     const secondLogger = createLogger({logName, logDirectory});
     secondLogger.info("Message from second logger");
@@ -192,6 +195,6 @@ describe("RotatingFileLogger", () => {
     await shutdownLogging();
 
     logContents = getContentsOfAllLogFiles({logName, logDirectory});
-    expect(logContents).to.contain("Message from second logger");
+    assert.ok(logContents.includes("Message from second logger"));
   });
 });
