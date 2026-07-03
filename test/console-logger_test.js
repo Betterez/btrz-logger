@@ -1,11 +1,10 @@
 const assert = require("node:assert/strict");
-const {describe, it, beforeEach, afterEach} = require("node:test");
+const {describe, it, beforeEach, afterEach, mock} = require("node:test");
 const {ObjectID} = require("bson");
 const Chance = require("chance");
 const chance = new Chance();
 const util = require("node:util");
 const {IncomingMessage} = require("node:http");
-const sinon = require("sinon");
 const {Logger, ConsoleLogger} = require("../index");
 const {trace: otlpTrace} = require("@opentelemetry/api");
 
@@ -19,21 +18,25 @@ describe("ConsoleLogger", () => {
   let currentDate = new Date();
   let timestamp;
   let logPrefix;
+  const assertSingleConsoleLog = (expectedMessage) => {
+    assert.strictEqual(console.log.mock.callCount(), 1);
+    assert.strictEqual(console.log.mock.calls[0].arguments[0], expectedMessage);
+  };
 
   beforeEach(() => {
     serverId = `server-${chance.hash({length: 4})}`;
     traceId = `trace-${chance.hash({length: 4})}`;
     consoleLogger = new ConsoleLogger({colorize: false});
-    sinon.spy(console, "log");
+    mock.method(console, "log");
 
     grafanaTraceId = `grafana-trace-${chance.hash({length: 4})}`;
-    sinon.stub(otlpTrace, "getActiveSpan").returns({
+    mock.method(otlpTrace, "getActiveSpan", () => ({
       spanContext() {
         return {
           traceId: grafanaTraceId
         };
       }
-    });
+    }));
 
     logger = new Logger({serverId, traceId});
     logger.addLogger(consoleLogger);
@@ -41,20 +44,20 @@ describe("ConsoleLogger", () => {
     // Add 1 millisecond to the current date to ensure that each test run uses a unique timestamp
     currentDate = new Date(currentDate.valueOf() + 1);
     timestamp = `${currentDate.toISOString().slice(0, -1)}000000Z`;
-    clock = sinon.useFakeTimers(currentDate);
+    clock = mock.timers;
+    clock.enable({apis: ["Date"], now: currentDate});
 
     logPrefix = `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`;
   });
 
   afterEach(() => {
-    clock.restore();
-    sinon.restore();
+    clock.reset();
+    mock.restoreAll();
   });
 
   it("should output a string containing the log level, timestamp, server ID, process ID, and trace ID", () => {
     logger.info("");
-    sinon.assert.calledOnce(console.log);
-    sinon.assert.calledWithExactly(console.log, `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
+    assertSingleConsoleLog(`INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should default the server ID to 'localhost' if no serverId is provided", () => {
@@ -62,8 +65,7 @@ describe("ConsoleLogger", () => {
     logger.addLogger(consoleLogger);
 
     logger.info("");
-    sinon.assert.calledOnce(console.log);
-    sinon.assert.calledWithExactly(console.log, `INFO  ${timestamp} localhost#${process.pid} ${traceId} ${grafanaTraceId}`);
+    assertSingleConsoleLog(`INFO  ${timestamp} localhost#${process.pid} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should default the trace ID to '-' if no traceId is provided", () => {
@@ -71,37 +73,34 @@ describe("ConsoleLogger", () => {
     logger.addLogger(consoleLogger);
 
     logger.info("");
-    sinon.assert.calledOnce(console.log);
-    sinon.assert.calledWithExactly(console.log, `INFO  ${timestamp} ${serverId}#${process.pid} - ${grafanaTraceId}`);
+    assertSingleConsoleLog(`INFO  ${timestamp} ${serverId}#${process.pid} - ${grafanaTraceId}`);
   });
 
   it("should output the message that was logged", () => {
     logger.info("Some message");
-    sinon.assert.calledOnce(console.log);
-    sinon.assert.calledWithExactly(console.log, `${logPrefix} Some message`);
+    assertSingleConsoleLog(`${logPrefix} Some message`);
   });
 
   it("should serialize and output an object when one is logged", () => {
     logger.info({someProperty: "some value"});
-    sinon.assert.calledOnce(console.log);
-    sinon.assert.calledWithExactly(console.log, `${logPrefix} \n{\n  someProperty: 'some value'\n}`);
+    assertSingleConsoleLog(`${logPrefix} \n{\n  someProperty: 'some value'\n}`);
   });
 
   it("should output a message with the correct severity", () => {
     logger.debug("Some message");
-    assert.match(console.log.args[0][0], /DEBUG/);
+    assert.match(console.log.mock.calls[0].arguments[0], /DEBUG/);
 
-    sinon.reset();
+    console.log.mock.resetCalls();
     logger.info("Some message");
-    assert.match(console.log.args[0][0], /INFO/);
+    assert.match(console.log.mock.calls[0].arguments[0], /INFO/);
 
-    sinon.reset();
+    console.log.mock.resetCalls();
     logger.error("Some message");
-    assert.match(console.log.args[0][0], /ERROR/);
+    assert.match(console.log.mock.calls[0].arguments[0], /ERROR/);
 
-    sinon.reset();
+    console.log.mock.resetCalls();
     logger.fatal("Some message");
-    assert.match(console.log.args[0][0], /FATAL/);
+    assert.match(console.log.mock.calls[0].arguments[0], /FATAL/);
   });
 
   describe("data serialization", () => {
@@ -110,8 +109,7 @@ describe("ConsoleLogger", () => {
     });
 
     function expectStringWasLogged(string) {
-      sinon.assert.calledOnce(console.log);
-      sinon.assert.calledWithExactly(console.log, `${logPrefix} ${string}`);
+      assertSingleConsoleLog(`${logPrefix} ${string}`);
     }
 
     it("should correctly serialize a string by returning the unmodified string", () => {
@@ -149,8 +147,7 @@ describe("ConsoleLogger", () => {
 
     it("should not serialize the value 'undefined'", () => {
       logger.info("Some message", undefined);
-      sinon.assert.calledOnce(console.log);
-      sinon.assert.calledWithExactly(console.log, logPrefix);
+      assertSingleConsoleLog(logPrefix);
     });
 
     it("should correctly serialize an error", () => {

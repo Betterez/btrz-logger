@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const {describe, it, beforeEach, afterEach} = require("node:test");
+const {describe, it, beforeEach, afterEach, mock} = require("node:test");
 
 describe("RotatingFileLogger", () => {
   const fs = require("node:fs");
@@ -7,7 +7,6 @@ describe("RotatingFileLogger", () => {
   const Chance = require("chance");
   const chance = new Chance();
   const RotatingFileStream = require("rotating-file-stream");
-  const sinon = require("sinon");
   const {Logger, RotatingFileLogger} = require("../index");
 
   const logDirectory = path.join(__dirname, "logs");
@@ -23,7 +22,7 @@ describe("RotatingFileLogger", () => {
   afterEach(async () => {
     await shutdownLogging();
     fs.rmSync(logDirectory, {recursive: true, force: true});
-    sinon.restore();
+    mock.restoreAll();
   });
 
   function createLogger({logName, logDirectory}) {
@@ -153,30 +152,30 @@ describe("RotatingFileLogger", () => {
   it("should avoid creating multiple file streams when multiple loggers are instantiated which log to the same file location", async () => {
     await shutdownLogging();
 
-    sinon.spy(RotatingFileStream, "createStream");
-    assert.strictEqual(RotatingFileStream.createStream.callCount, 0);
+    mock.method(RotatingFileStream, "createStream");
+    assert.strictEqual(RotatingFileStream.createStream.mock.callCount(), 0);
 
     const firstLogger = createLogger({logName, logDirectory});
-    assert.strictEqual(RotatingFileStream.createStream.callCount, 1);
+    assert.strictEqual(RotatingFileStream.createStream.mock.callCount(), 1);
 
     const secondLogger = createLogger({logName, logDirectory});
-    assert.strictEqual(RotatingFileStream.createStream.callCount, 1);
+    assert.strictEqual(RotatingFileStream.createStream.mock.callCount(), 1);
     assert.strictEqual(firstLogger.loggers[0]._stream, secondLogger.loggers[0]._stream);
   });
 
   it("should recreate the file stream when the logger's underlying file stream is closed, then a new logger instance is created", async () => {
     await shutdownLogging();
 
-    sinon.spy(RotatingFileStream, "createStream");
-    assert.strictEqual(RotatingFileStream.createStream.callCount, 0);
+    mock.method(RotatingFileStream, "createStream");
+    assert.strictEqual(RotatingFileStream.createStream.mock.callCount(), 0);
 
     const firstLogger = createLogger({logName, logDirectory});
-    assert.strictEqual(RotatingFileStream.createStream.callCount, 1);
+    assert.strictEqual(RotatingFileStream.createStream.mock.callCount(), 1);
 
     await shutdownLogging();
 
     const secondLogger = createLogger({logName, logDirectory});
-    assert.strictEqual(RotatingFileStream.createStream.callCount, 2);
+    assert.strictEqual(RotatingFileStream.createStream.mock.callCount(), 2);
     assert.notStrictEqual(firstLogger.loggers[0]._stream, secondLogger.loggers[0]._stream);
   });
 

@@ -1,6 +1,5 @@
 const assert = require("node:assert/strict");
-const {describe, it, beforeEach, afterEach} = require("node:test");
-const sinon = require("sinon");
+const {describe, it, beforeEach, afterEach, mock} = require("node:test");
 const {LoggerForTests, Logger} = require("../index");
 
 describe("LoggerForTests", () => {
@@ -9,9 +8,9 @@ describe("LoggerForTests", () => {
 
   beforeEach(() => {
     mockLogDestination = {
-      log: sinon.stub(),
-      write: sinon.stub(),
-      error: sinon.stub()
+      log: mock.fn(),
+      write: mock.fn(),
+      error: mock.fn()
     };
     loggerForTests = new LoggerForTests();
     loggerForTests.addLogger(mockLogDestination);
@@ -20,7 +19,7 @@ describe("LoggerForTests", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    mock.restoreAll();
   });
 
   for (const logLevel of Object.values(Logger.LogLevel())) {
@@ -28,8 +27,8 @@ describe("LoggerForTests", () => {
       loggerForTests[logLevel]("Some message");
       LoggerForTests.flushBuffer();
 
-      sinon.assert.calledOnce(mockLogDestination.log);
-      const logTokens = mockLogDestination.log.firstCall.args[0];
+      assert.strictEqual(mockLogDestination.log.mock.callCount(), 1);
+      const logTokens = mockLogDestination.log.mock.calls[0].arguments[0];
       assert.deepStrictEqual({
         level: logLevel,
         message: "Some message"
@@ -43,89 +42,89 @@ describe("LoggerForTests", () => {
   it("should not output any logs until flushBuffer() is called", () => {
     loggerForTests.info("Some message");
     loggerForTests.error("Some other message");
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
 
     LoggerForTests.flushBuffer();
-    sinon.assert.callCount(mockLogDestination.log, 2);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 2);
     assert.deepStrictEqual({
       level: "info",
       message: "Some message"
     }, {
-      level: mockLogDestination.log.firstCall.args[0].level,
-      message: mockLogDestination.log.firstCall.args[0].message
+      level: mockLogDestination.log.mock.calls[0].arguments[0].level,
+      message: mockLogDestination.log.mock.calls[0].arguments[0].message
     });
     assert.deepStrictEqual({
       level: "error",
       message: "Some other message"
     }, {
-      level: mockLogDestination.log.secondCall.args[0].level,
-      message: mockLogDestination.log.secondCall.args[0].message
+      level: mockLogDestination.log.mock.calls[1].arguments[0].level,
+      message: mockLogDestination.log.mock.calls[1].arguments[0].message
     });
   });
 
   it("should immediately output all buffered logs when a fatal log event occurs", () => {
     loggerForTests.info("Some info message");
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
 
     loggerForTests.fatal("Some fatal message");
-    sinon.assert.callCount(mockLogDestination.log, 2);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 2);
     assert.deepStrictEqual({
       level: "info",
       message: "Some info message"
     }, {
-      level: mockLogDestination.log.firstCall.args[0].level,
-      message: mockLogDestination.log.firstCall.args[0].message
+      level: mockLogDestination.log.mock.calls[0].arguments[0].level,
+      message: mockLogDestination.log.mock.calls[0].arguments[0].message
     });
     assert.deepStrictEqual({
       level: "fatal",
       message: "Some fatal message"
     }, {
-      level: mockLogDestination.log.secondCall.args[0].level,
-      message: mockLogDestination.log.secondCall.args[0].message
+      level: mockLogDestination.log.mock.calls[1].arguments[0].level,
+      message: mockLogDestination.log.mock.calls[1].arguments[0].message
     });
   });
 
   it("should stop buffering logs once a fatal log event occurs, and output logs immediately", () => {
     loggerForTests.fatal("Some fatal message");
-    sinon.assert.calledOnce(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 1);
     loggerForTests.info("Some info message");
-    sinon.assert.callCount(mockLogDestination.log, 2);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 2);
   });
 
   it("should resume buffering logs when .onTestFinished() is called", () => {
     loggerForTests.fatal("Some fatal message");
-    sinon.assert.calledOnce(mockLogDestination.log);
-    mockLogDestination.log.reset();
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 1);
+    mockLogDestination.log.mock.resetCalls();
 
     LoggerForTests.onTestFinished({});
     loggerForTests.info("Some info message");
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
   });
 
   it("should output all buffered logs when onTestFinished() is called, and the test has failed", () => {
     loggerForTests.info("Some info message");
     loggerForTests.debug("Some debug message");
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
 
     LoggerForTests.onTestFinished({state: "failed"});
-    sinon.assert.callCount(mockLogDestination.log, 2);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 2);
   });
 
   it("should not output any logs when onTestFinished() is called, and the test has succeeded", () => {
     loggerForTests.info("Some info message");
     loggerForTests.debug("Some debug message");
     LoggerForTests.onTestFinished({state: "passed"});
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
   });
 
   it("should clear the log buffer when onTestFinished() is called, and the test has succeeded", () => {
     loggerForTests.info("Some info message");
     loggerForTests.debug("Some debug message");
     LoggerForTests.onTestFinished({state: "passed"});
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
 
     LoggerForTests.flushBuffer();
-    sinon.assert.notCalled(mockLogDestination.log);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
   });
 
   it("should output the buffered logs from all instances of the logger in the correct order when onTestFinished() is called, and the test has failed", () => {
@@ -143,8 +142,8 @@ describe("LoggerForTests", () => {
 
     LoggerForTests.onTestFinished({state: "failed"});
 
-    sinon.assert.callCount(mockLogDestination.log, 5);
-    const logMessagesInOrder = mockLogDestination.log.args.map((arguments) => arguments[0].message);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 5);
+    const logMessagesInOrder = mockLogDestination.log.mock.calls.map((call) => call.arguments[0].message);
     assert.deepStrictEqual(logMessagesInOrder, [
       "Message A",
       "Message B",
@@ -165,10 +164,10 @@ describe("LoggerForTests", () => {
     loggerTwo.info("Message B");
 
     LoggerForTests.onTestFinished({state: "passed"});
-    sinon.assert.callCount(mockLogDestination.log, 0);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
 
     // Check that the buffer was cleared by trying to flush all buffered logs
     LoggerForTests.flushBuffer();
-    sinon.assert.callCount(mockLogDestination.log, 0);
+    assert.strictEqual(mockLogDestination.log.mock.callCount(), 0);
   });
 });

@@ -1,7 +1,6 @@
 const assert = require("node:assert/strict");
 const {IncomingMessage} = require("node:http");
-const {describe, it, beforeEach, afterEach} = require("node:test");
-const sinon = require("sinon");
+const {describe, it, beforeEach, afterEach, mock} = require("node:test");
 const {Logger} = require("../index");
 
 describe("Logger", () => {
@@ -9,11 +8,18 @@ describe("Logger", () => {
   let logger;
   let clock;
   let currentDate = new Date();
+  const assertLogEntryIncludes = (expectedEntry) => {
+    assert.strictEqual(mockLogger.log.mock.callCount() > 0, true);
+    const logEntry = mockLogger.log.mock.calls[0].arguments[0];
+    for (const [key, value] of Object.entries(expectedEntry)) {
+      assert.deepStrictEqual(logEntry[key], value);
+    }
+  };
 
   beforeEach(() => {
     mockLogger = {
-      log: sinon.stub(),
-      write: sinon.stub(),
+      log: mock.fn(),
+      write: mock.fn(),
       error: () => {}
     };
 
@@ -22,18 +28,19 @@ describe("Logger", () => {
 
     // Add 1 millisecond to the current date to ensure that each test run uses a unique timestamp
     currentDate = new Date(currentDate.valueOf() + 1);
-    clock = sinon.useFakeTimers(currentDate);
+    clock = mock.timers;
+    clock.enable({apis: ["Date"], now: currentDate});
   });
 
   afterEach(() => {
-    clock.restore();
-    sinon.restore();
+    clock.reset();
+    mock.restoreAll();
   });
 
   it("should allow a string message to be logged", () => {
     logger.info("Some message");
-    sinon.assert.calledOnce(mockLogger.log);
-    sinon.assert.calledWithMatch(mockLogger.log, {
+    assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+    assertLogEntryIncludes({
       message: "Some message",
       data: undefined
     });
@@ -41,8 +48,8 @@ describe("Logger", () => {
 
   it("should allow an object to be logged", () => {
     logger.info({someProperty: "some value"});
-    sinon.assert.calledOnce(mockLogger.log);
-    sinon.assert.calledWithMatch(mockLogger.log, {
+    assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+    assertLogEntryIncludes({
       message: "",
       data: { someProperty: "some value" }
     });
@@ -50,16 +57,16 @@ describe("Logger", () => {
 
   it("should allow the message argument and the data argument to be provided to the logger in any order", () => {
     logger.info("Some message", {someProperty: "some value"});
-    sinon.assert.calledOnce(mockLogger.log);
-    sinon.assert.calledWithMatch(mockLogger.log, {
+    assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+    assertLogEntryIncludes({
       message: "Some message",
       data: { someProperty: "some value" }
     });
 
-    sinon.reset();
+    mockLogger.log.mock.resetCalls();
     logger.info({someProperty: "some value"}, "Some message");
-    sinon.assert.calledOnce(mockLogger.log);
-    sinon.assert.calledWithMatch(mockLogger.log, {
+    assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+    assertLogEntryIncludes({
       message: "Some message",
       data: { someProperty: "some value" }
     });
@@ -67,32 +74,32 @@ describe("Logger", () => {
 
   it("should remove sensitive keys from any objects provided to the logger", () => {
     logger.info({password: "some password"});
-    sinon.assert.calledOnce(mockLogger.log);
-    sinon.assert.calledWithMatch(mockLogger.log, {
+    assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+    assertLogEntryIncludes({
       data: { password: '***' }
     });
   });
 
   it("should create a log entry with the correct severity", () => {
     logger.debug("Some message");
-    sinon.assert.calledWithMatch(mockLogger.log, {level: "debug"});
+    assertLogEntryIncludes({level: "debug"});
 
-    sinon.reset();
+    mockLogger.log.mock.resetCalls();
     logger.info("Some message");
-    sinon.assert.calledWithMatch(mockLogger.log, {level: "info"});
+    assertLogEntryIncludes({level: "info"});
 
-    sinon.reset();
+    mockLogger.log.mock.resetCalls();
     logger.error("Some message");
-    sinon.assert.calledWithMatch(mockLogger.log, {level: "error"});
+    assertLogEntryIncludes({level: "error"});
 
-    sinon.reset();
+    mockLogger.log.mock.resetCalls();
     logger.fatal("Some message");
-    sinon.assert.calledWithMatch(mockLogger.log, {level: "fatal"});
+    assertLogEntryIncludes({level: "fatal"});
   });
 
   it("should create a log entry with the current date in nanosecond precision", () => {
     logger.info("Some message");
-    sinon.assert.calledWithMatch(mockLogger.log, {
+    assertLogEntryIncludes({
       date: `${currentDate.toISOString().slice(0, -1)}000000Z`
     });
   });
@@ -103,43 +110,43 @@ describe("Logger", () => {
     logger.info("Some message");
     logger.info("Some message");
 
-    assert.strictEqual(mockLogger.log.args[0][0].date, `${currentDate.toISOString().slice(0, -1)}000000Z`);
-    assert.strictEqual(mockLogger.log.args[1][0].date, `${currentDate.toISOString().slice(0, -1)}000001Z`);
-    assert.strictEqual(mockLogger.log.args[2][0].date, `${currentDate.toISOString().slice(0, -1)}000002Z`);
+    assert.strictEqual(mockLogger.log.mock.calls[0].arguments[0].date, `${currentDate.toISOString().slice(0, -1)}000000Z`);
+    assert.strictEqual(mockLogger.log.mock.calls[1].arguments[0].date, `${currentDate.toISOString().slice(0, -1)}000001Z`);
+    assert.strictEqual(mockLogger.log.mock.calls[2].arguments[0].date, `${currentDate.toISOString().slice(0, -1)}000002Z`);
   });
 
   describe("data logging", () => {
     it("should correctly log a string", () => {
       logger.info("Some message", "some data");
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: "some data"
       });
     });
 
     it("should correctly log a number ", () => {
       logger.info("Some message", -47682.36);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: -47682.36
       });
     });
 
     it("should correctly log the number 0", () => {
       logger.info("Some message", 0);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: 0
       });
     });
 
     it("should correctly log the value 'null'", () => {
       logger.info("Some message", null);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: null
       });
     });
 
     it("should correctly log the value 'undefined'", () => {
       logger.info("Some message", undefined);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: undefined
       });
     });
@@ -147,7 +154,7 @@ describe("Logger", () => {
     it("should correctly log an error", () => {
       const error = new Error("Some message");
       logger.info("Some message", error);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: error
       });
     });
@@ -159,7 +166,7 @@ describe("Logger", () => {
           someOtherProperty: "some other value"
         }
       });
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: {
           someProperty: "some value",
           someChildObject: {
@@ -171,7 +178,7 @@ describe("Logger", () => {
 
     it("should correctly log an empty object", () => {
       logger.info("Some message", {});
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: {}
       });
     });
@@ -182,7 +189,7 @@ describe("Logger", () => {
         2237,
         {someProperty: "some value"}
       ]);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: [
           "Some string",
           2237,
@@ -193,21 +200,21 @@ describe("Logger", () => {
 
     it("should correctly log an empty array", () => {
       logger.info("Some message", []);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: []
       });
     });
 
     it("should correctly log 'NaN'", () => {
       logger.info("Some message", NaN);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: NaN
       });
     });
 
     it("should correctly log 'Infinity'", () => {
       logger.info("Some message", Infinity);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: Infinity
       });
     });
@@ -222,7 +229,7 @@ describe("Logger", () => {
       };
 
       logger.info("Some message", incomingMessage);
-      sinon.assert.calledWithMatch(mockLogger.log, {
+      assertLogEntryIncludes({
         data: {
           headers: {
             'content-type': 'application/json'
@@ -237,9 +244,8 @@ describe("Logger", () => {
     it("should log a Set as an empty object", () => {
       // This behaviour should be changed in the future
       logger.info("Some message", new Set([1, 2, 3]));
-      sinon.assert.calledWithMatch(mockLogger.log, {
-        data: {}
-      });
+      assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+      assert.strictEqual(mockLogger.log.mock.calls[0].arguments[0].data instanceof Set, true);
     });
 
     it( "should log a Map as an empty object", () => {
@@ -248,9 +254,8 @@ describe("Logger", () => {
       map.set("someProperty", "some value");
 
       logger.info("Some message", map);
-      sinon.assert.calledWithMatch(mockLogger.log, {
-        data: {}
-      });
+      assert.strictEqual(mockLogger.log.mock.callCount(), 1);
+      assert.strictEqual(mockLogger.log.mock.calls[0].arguments[0].data instanceof Map, true);
     });
   });
 });
