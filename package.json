@@ -8,7 +8,8 @@
     "postversion": "git push origin master && git push --tags",
     "version": "git tag $1",
     "test": "node --test --test-force-exit test/*.js",
-    "test-w": "node --test --test-force-exit --watch test/*.js"
+    "test-w": "node --test --test-force-exit --watch test/*.js",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "repository": {
     "type": "git",
