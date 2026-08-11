@@ -18,6 +18,8 @@ describe("ConsoleLogger", () => {
   let currentDate = new Date();
   let timestamp;
   let logPrefix;
+  // Matches src/formatting.js: serverId column is padEnd(15)
+  const formatServerId = (id) => `${id}#${process.pid}`.padEnd(15, " ");
   const assertSingleConsoleLog = (expectedMessage) => {
     assert.strictEqual(console.log.mock.callCount(), 1);
     assert.strictEqual(console.log.mock.calls[0].arguments[0], expectedMessage);
@@ -47,7 +49,7 @@ describe("ConsoleLogger", () => {
     clock = mock.timers;
     clock.enable({apis: ["Date"], now: currentDate});
 
-    logPrefix = `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`;
+    logPrefix = `INFO  ${timestamp} ${formatServerId(serverId)} ${traceId} ${grafanaTraceId}`;
   });
 
   afterEach(() => {
@@ -57,7 +59,7 @@ describe("ConsoleLogger", () => {
 
   it("should output a string containing the log level, timestamp, server ID, process ID, and trace ID", () => {
     logger.info("");
-    assertSingleConsoleLog(`INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId}`);
+    assertSingleConsoleLog(`INFO  ${timestamp} ${formatServerId(serverId)} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should default the server ID to 'localhost' if no serverId is provided", () => {
@@ -65,7 +67,7 @@ describe("ConsoleLogger", () => {
     logger.addLogger(consoleLogger);
 
     logger.info("");
-    assertSingleConsoleLog(`INFO  ${timestamp} localhost#${process.pid} ${traceId} ${grafanaTraceId}`);
+    assertSingleConsoleLog(`INFO  ${timestamp} ${formatServerId("localhost")} ${traceId} ${grafanaTraceId}`);
   });
 
   it("should default the trace ID to '-' if no traceId is provided", () => {
@@ -73,7 +75,7 @@ describe("ConsoleLogger", () => {
     logger.addLogger(consoleLogger);
 
     logger.info("");
-    assertSingleConsoleLog(`INFO  ${timestamp} ${serverId}#${process.pid} - ${grafanaTraceId}`);
+    assertSingleConsoleLog(`INFO  ${timestamp} ${formatServerId(serverId)} - ${grafanaTraceId}`);
   });
 
   it("should output the message that was logged", () => {
@@ -105,7 +107,7 @@ describe("ConsoleLogger", () => {
 
   describe("data serialization", () => {
     beforeEach(() => {
-      logPrefix = `INFO  ${timestamp} ${serverId}#${process.pid} ${traceId} ${grafanaTraceId} Some message`;
+      logPrefix = `INFO  ${timestamp} ${formatServerId(serverId)} ${traceId} ${grafanaTraceId} Some message`;
     });
 
     function expectStringWasLogged(string) {
